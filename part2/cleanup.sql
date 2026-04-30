@@ -6,4 +6,7 @@ drop table member cascade constraints -- drop MEMBER
 
 drop table school cascade constraints -- drop SCHOOL
 ;
+ 
+drop table parent cascade constraints -- drop PARENT
+;
 
