@@ -20,7 +20,6 @@ create table member(
   city         VARCHAR(100) NOT NULL,  
   fname        VARCHAR(100) NOT NULL,
   lname        VARCHAR(100) NOT NULL,
-  email        VARCHAR(100) NOT NULL,
   member_expr  DATE, -- NOTE: When the member's expiration date is
   CONSTRAINT member_pk PRIMARY KEY (member_id) -- primary key constraint
   -- NOTE: last name and first can also be used for identification, put ID is preferred and designated as key
@@ -45,12 +44,15 @@ create table volunteer_liason(
 );
 
 -- Tracks appointed member to be a school liason
+-- NOTE: From ER diagram, this relationship has all partial participation
+-- so we need to invest in a separate a
 create table liason(
   member_id   DECIMAL(4,0) NOT NULL,
   school_name VARCHAR(100) NOT NULL,
   CONSTRAINT liason_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
   CONSTRAINT liason_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
-  CONSTRAINT liason_pk PRIMARY KEY (member_id, school_name)
+  CONSTRAINT liason_pk PRIMARY KEY (member_id),
+  CONSTRAINT school_name UNIQUE -- NOTE: constraint is to limit multiple associations
 );
   
 create table parent(
@@ -66,25 +68,73 @@ create table member_child(
   school_name    VARCHAR(100) NOT NULL,
   date_of_record DATE NOT NULL, -- NOTE: When this info was learned and put inside database
   CONSTRAINT member_child_pk PRIMARY KEY(fname, lname, member_id),
-  CONSTRAINT member_child_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
+  CONSTRAINT member_child_member_fk FOREIGN KEY (member_id) REFERENCES parent(member_id),
   CONSTRAINT member_child_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name)
 );
 
+/**
+* == NOTES AND REASONING FOR THIS RELATIONAL SCHEMA == 
+* I feel like collapsing the teacher and admin subclasses into
+* single relation needs some further justification, since
+* there are a other ways we could represent these entities.
+*
+* The main reason is decided to collapse the subclassing entities
+* was to improve queries involving all educator, avoiding many joins
+* on tables with few attributes.
+*/
 create table educator(
-  member_id  DECIMAL(4,0) NOT NULL, -- parent id references foregin key of memeber
-  is_teacher CHAR(1) NOT NULL CHECK (is_teacher in ('Y', 'N')), -- NOTE: collasping educator subclasses via boolean flags
-  is_admin   CHAR(1) NOT NULL CHECK (is_admin in ('Y', 'N')),
+  member_id   DECIMAL(4,0) NOT NULL, -- parent id references foregin key of memeber
+  is_teacher  CHAR(1) NOT NULL CHECK (is_teacher in ('Y', 'N')), -- NOTE: collasping educator subclasses via boolean flags
+  is_admin    CHAR(1) NOT NULL CHECK (is_admin in ('Y', 'N')),
+  school_name VARCHAR(100) NOT NULL,
   CONSTRAINT educator_pk PRIMARY KEY (member_id),
-  CONSTRAINT educator_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id)
+  CONSTRAINT educator_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
+  CONSTRAINT educator_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
+  CONSTRAINT admin_teaher_disjoint_and_total_coverage CHECK ((is_teacher = 'N' AND is_admin = 'Y') 
+    OR (is_teacher = 'Y' AND is_admin = 'N'))
 );
 
 
 -- TODO: Create integrity constraint that says only one role can be occupied at a time
 create table board_member(
   member_id DECIMAL(4,0) NOT NULL, -- parent id references foregin key of memeber
-  role      VARCHAR2(13) CHECK (role in ('PRESIDENT', 'SECRETARY', 'TREASURER', 'DATA MANAGER')),
+  role      VARCHAR(13) CHECK (role in ('PRESIDENT', 'SECRETARY', 'TREASURER', 'DATA MANAGER')),
   CONSTRAINT board_mem_pk PRIMARY KEY (member_id),
-  CONSTRAINT board_mem_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id)
+  CONSTRAINT board_mem_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
+  CONSTRAINT board_mem_role_unique UNIQUE(role) -- NOTE: ensures there is only one board member assigned to a role
 );
 
+create table meeting(
+  meet_location VARCHAR(100) NOT NULL,
+  meet_date     VARCHAR(100) NOT NULL,
+  member_id     DECIMAL(4,0) NOT NULL,
+  CONSTRAINT meeting_pk PRIMARY KEY (meet_location, meet_date),
+  CONSTRAINT meeting_board_mem_fk FOREIGN KEY (member_id) REFERENCES board_member(member_id)
+);
 
+-- TODO: capture VISITS relationship
+create table non_member(
+  fname   VARCHAR(100) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
+  lname  VARCHAR(100) NOT NULL,
+  email  VARCHAR(100) NOT NULL,
+  zip    DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable, but decimal is easier for comparison
+  date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
+  street VARCHAR(100) NOT NULL,
+  city   VARCHAR(100) NOT NULL,  
+  CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
+);
+
+create table visitor(
+  fname         VARCHAR(100) NOT NULL, -- NOTE: maybe I should prefix this to avoid unwanted natural joins
+  lname         VARCHAR(100) NOT NULL,
+  email         VARCHAR(100) NOT NULL,
+  meet_location VARCHAR(100) NOT NULL,
+  meet_date     VARCHAR(100) NOT NULL,
+  member_id     DECIMAL(4,0) NOT NULL,
+  CONSTRAINT visitor_non_mem_fk FOREIGN KEY (fname, lname, email) 
+    REFERENCES non_member(fname, lname, email),
+  CONSTRAINT visitor_meeting_fk FOREIGN KEY (meet_location, meet_date) 
+    REFERENCES meeting(meet_location, meet_date),
+   -- NOTE: This is a very big and complex primary key
+  CONSTRAINT visitor_pk PRIMARY KEY (fname, lname, email, meet_date, meet_location)
+);
