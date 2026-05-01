@@ -63,11 +63,11 @@ create table parent(
 
 create table member_child(
   member_id      DECIMAL(4,0) NOT NULL, 
-  fname          VARCHAR(100) NOT NULL,
-  lname          VARCHAR(100) NOT NULL,
+  child_fname    VARCHAR(100) NOT NULL,
+  child_lname    VARCHAR(100) NOT NULL,
   school_name    VARCHAR(100) NOT NULL,
   date_of_record DATE NOT NULL, -- NOTE: When this info was learned and put inside database
-  CONSTRAINT member_child_pk PRIMARY KEY(fname, lname, member_id),
+  CONSTRAINT member_child_pk PRIMARY KEY(child_fname, child_lname, member_id),
   CONSTRAINT member_child_member_fk FOREIGN KEY (member_id) REFERENCES parent(member_id),
   CONSTRAINT member_child_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name)
 );
@@ -87,11 +87,13 @@ create table educator(
   is_teacher  CHAR(1) NOT NULL CHECK (is_teacher in ('Y', 'N')), -- NOTE: collasping educator subclasses via boolean flags
   is_admin    CHAR(1) NOT NULL CHECK (is_admin in ('Y', 'N')),
   school_name VARCHAR(100) NOT NULL,
+  teach_sci_or_math VARCHAR(100) NOT NULL CHECK (subject in ('SCIENCE', 'MATH', 'BOTH', 'NONE')),
   CONSTRAINT educator_pk PRIMARY KEY (member_id),
   CONSTRAINT educator_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
   CONSTRAINT educator_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
   CONSTRAINT admin_teaher_disjoint_and_total_coverage CHECK ((is_teacher = 'N' AND is_admin = 'Y') 
-    OR (is_teacher = 'Y' AND is_admin = 'N'))
+    OR (is_teacher = 'Y' AND is_admin = 'N')), -- NOTE: each educator instance must either be admin or teacher, cannot overlap and cannot be a different instance
+  CONSTRAINT admin_does_not_teach CHECK(is_admin = 'Y' AND subject = 'NONE')) -- NOTE: administrators do not teach subjects, must be none
 );
 
 
@@ -112,7 +114,6 @@ create table meeting(
   CONSTRAINT meeting_board_mem_fk FOREIGN KEY (member_id) REFERENCES board_member(member_id)
 );
 
--- TODO: capture VISITS relationship
 create table non_member(
   fname   VARCHAR(100) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
   lname  VARCHAR(100) NOT NULL,
@@ -122,6 +123,14 @@ create table non_member(
   street VARCHAR(100) NOT NULL,
   city   VARCHAR(100) NOT NULL,  
   CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
+);
+
+create talbe non_member_child(
+  child_fname VARCHAR(100) NOT NULL,
+  child_lname VARCHAR(100) NOT NULL,
+  school_name VARCHAR(100) NOT NULL,
+  CONSTRAINT non_member_child_school_fk FOREIGN KEY (school_name)
+    REFERENCES school(school_name)
 );
 
 create table visitor(
@@ -137,5 +146,6 @@ create table visitor(
     REFERENCES meeting(meet_location, meet_date),
    -- NOTE: This is a very big and complex primary key
   CONSTRAINT visitor_pk PRIMARY KEY (fname, lname, email, meet_date, meet_location)
-  -- NOTE: Isn't the inclusion dependency constraints covered by the foreign key contraints?
+  -- TODO: This relation needs two inclusion dependencies, likely deferrable until commit
 );
+
