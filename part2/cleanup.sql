@@ -16,3 +16,11 @@ drop table board_member cascade constraints -- drop BOARD MEMBER
 drop table member_child cascade constraints -- drop MEMBER CHILD
 ;
 
+drop table educator cascade constraints -- drop EDUCATOR
+;
+
+drop table volunteer_liason
+;
+
+drop table liason
+;
