@@ -52,7 +52,7 @@ create table liason(
   CONSTRAINT liason_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
   CONSTRAINT liason_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
   CONSTRAINT liason_pk PRIMARY KEY (member_id),
-  CONSTRAINT school_name UNIQUE -- NOTE: constraint is to limit multiple associations
+  CONSTRAINT school_name_unique UNIQUE(school_name) -- NOTE: constraint is to limit multiple associations
 );
   
 create table parent(
@@ -137,4 +137,5 @@ create table visitor(
     REFERENCES meeting(meet_location, meet_date),
    -- NOTE: This is a very big and complex primary key
   CONSTRAINT visitor_pk PRIMARY KEY (fname, lname, email, meet_date, meet_location)
+  -- NOTE: Isn't the inclusion dependency constraints covered by the foreign key contraints?
 );

@@ -23,7 +23,7 @@ drop table member_child cascade constraints -- drop MEMBER CHILD
 drop table educator cascade constraints -- drop EDUCATOR
 ;
 
-drop table volunteer_liason casade constraints -- drop VOLUNTEER LIASON
+drop table volunteer_liason cascade constraints -- drop VOLUNTEER LIASON
 ;
 
 drop table liason -- drop LIASON
@@ -37,4 +37,5 @@ drop table non_member cascade constraints -- drop NON MEMBER
 
 drop table meeting cascade constraints -- drop MEMBER
 ;
+
 
