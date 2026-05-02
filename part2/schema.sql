@@ -12,6 +12,7 @@ create table member(
   member_id    DECIMAL(7,0) NOT NULL, -- 4 digits, no digits after the decimal place
   fname        VARCHAR(20) NOT NULL,
   lname        VARCHAR(20) NOT NULL,
+  email        VARCHAR(30) NOT NULL,
   zip          DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable
   street       VARCHAR(20) NOT NULL,
   city         VARCHAR(20) NOT NULL,  
@@ -130,9 +131,9 @@ create table non_member(
   lname          VARCHAR(20) NOT NULL,
   email          VARCHAR(20) NOT NULL,
   zip            DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable, but decimal is easier for comparison
-  date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
   street         VARCHAR(20) NOT NULL,
   city           VARCHAR(20) NOT NULL,  
+  date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
   CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
 );
 

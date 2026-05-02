@@ -15,18 +15,19 @@ SQL> create table member(
   2    member_id    DECIMAL(7,0) NOT NULL, -- 4 digits, no digits after the decimal place
   3    fname	    VARCHAR(20) NOT NULL,
   4    lname	    VARCHAR(20) NOT NULL,
-  5    zip	    DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable
-  6    street	    VARCHAR(20) NOT NULL,
-  7    city	    VARCHAR(20) NOT NULL,
-  8    member_expr  DATE NOT NULL, -- NOTE: When the member's expiration date is
-  9    date_joined  DATE NOT NULL,
- 10    date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
- 11    -- NOTE: Tracks the standing of each member
- 12    standing     VARCHAR(20) NOT NULL CHECK (standing in ('good', 'poor')),
- 13    CONSTRAINT member_pk PRIMARY KEY (member_id), -- primary key constraint
- 14    CONSTRAINT has_member_id_prefix CHECK (member_id LIKE '900%') -- make sure each ID has 900 prefix
- 15    -- NOTE: last name and first can also be used for identification, put ID is preferred and designated as key
- 16  );
+  5    email	    VARCHAR(30) NOT NULL,
+  6    zip	    DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable
+  7    street	    VARCHAR(20) NOT NULL,
+  8    city	    VARCHAR(20) NOT NULL,
+  9    member_expr  DATE NOT NULL, -- NOTE: When the member's expiration date is
+ 10    date_joined  DATE NOT NULL,
+ 11    date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
+ 12    -- NOTE: Tracks the standing of each member
+ 13    standing     VARCHAR(20) NOT NULL CHECK (standing in ('good', 'poor')),
+ 14    CONSTRAINT member_pk PRIMARY KEY (member_id), -- primary key constraint
+ 15    CONSTRAINT has_member_id_prefix CHECK (member_id LIKE '900%') -- make sure each ID has 900 prefix
+ 16    -- NOTE: last name and first can also be used for identification, put ID is preferred and designated as key
+ 17  );
 
 Table created.
 
@@ -160,9 +161,9 @@ SQL> create table non_member(
   3    lname	      VARCHAR(20) NOT NULL,
   4    email	      VARCHAR(20) NOT NULL,
   5    zip	      DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable, but decimal is easier for comparison
-  6    date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
-  7    street	      VARCHAR(20) NOT NULL,
-  8    city	      VARCHAR(20) NOT NULL,
+  6    street	      VARCHAR(20) NOT NULL,
+  7    city	      VARCHAR(20) NOT NULL,
+  8    date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
   9    CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
  10  );
 
@@ -224,7 +225,7 @@ SQL>
 SQL> 
 SQL> /* INSERT 1: Create a school */
 SQL> INSERT INTO school
-  2  VALUES('abott middle', 'george', 'foreman', 'n', 'y');
+  2  VALUES('abott middle', 'george', 'foreman','n', 'y');
 
 1 row created.
 
@@ -238,7 +239,7 @@ SQL>
 SQL> 
 SQL> /* INSERT 2: Member that is only a parent */
 SQL> INSERT INTO member
-  2  VALUES(900001, 'daniel', 'plainview', 87801,
+  2  VALUES(900001, 'daniel', 'plainview', 'dplain@gmail.com', 87801,
   3    '1 leroy dr.', 'socorro', TO_DATE('2026-05-11', 'YYYY-MM-DD'),
   4    TO_DATE('2023-05-11', 'YYYY-MM-DD'), SYSDATE, 'good');
 
@@ -262,7 +263,7 @@ SQL>
 SQL> /* INSERT 3: Another member that is only a parent */
 SQL> 
 SQL> INSERT INTO member
-  2  VALUES(900002, 'royal', 'tennenbaum', 87801,
+  2  VALUES(900002, 'royal', 'tennenbaum', 'royalt@gmail.com', 87801,
   3    '1 leroy dr.', 'socorro', TO_DATE('2026-04-01', 'YYYY-MM-DD'),
   4    TO_DATE('2023-04-01', 'YYYY-MM-DD'), SYSDATE, 'poor');
 
@@ -286,7 +287,7 @@ SQL>
 SQL> /* INSERT 4: Member that is only an educator */
 SQL> 
 SQL> INSERT INTO member
-  2  VALUES(900003, 'gary', 'garyson', 87801, '2 leroy dr.', 'socorro',
+  2  VALUES(900003, 'gary', 'garyson', 'ggary@gary.com', 87801, '2 leroy dr.', 'socorro',
   3   TO_DATE('2026-05-26', 'YYYY-MM-DD'), TO_DATE('2016-05-26', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
@@ -302,7 +303,7 @@ SQL> INSERT INTO educator
 SQL> 
 SQL> /* INSERT 5: Member that is both a parent and an educator */
 SQL> INSERT INTO member
-  2  VALUES(900004, 'john', 'johnson', 87801, '3 leroy dr.', 'socorro',
+  2  VALUES(900004, 'john', 'johnson', 'jjohn@john.com', 87801, '3 leroy dr.', 'socorro',
   3   TO_DATE('2026-11-11', 'YYYY-MM-DD'), TO_DATE('2016-11-11', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
@@ -326,6 +327,107 @@ SQL>
 SQL> -- Create educator info
 SQL> INSERT INTO educator
   2  VALUES(900004, 'y', 'n', 'abott high', 'science');
+
+1 row created.
+
+SQL> 
+SQL> /* INSERT 6: Member that is both a parent and an educator */
+SQL> 
+SQL> INSERT INTO member
+  2  VALUES(900005, 'cole', 'coleson', 'cole@c.com', 87801, '4 leroy dr.', 'socorro',
+  3   TO_DATE('2027-3-11', 'YYYY-MM-DD'), TO_DATE('2016-3-11', 'YYYY-MM-DD'),
+  4   SYSDATE, 'good');
+
+1 row created.
+
+SQL> 
+SQL> -- Create parent info
+SQL> INSERT INTO member_child
+  2  VALUES(900005, 'cole jr.', 'coleson', 'abott high', SYSDATE);
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO member_child
+  2  VALUES(900005, 'cole jr. II', 'coleson', 'abott high', SYSDATE);
+
+1 row created.
+
+SQL> 
+SQL> -- Create parent info
+SQL> INSERT INTO parent
+  2  VALUES(900005);
+
+1 row created.
+
+SQL> 
+SQL> -- Create educator info
+SQL> INSERT INTO educator
+  2  VALUES(900005, 'y', 'n', 'abott high', 'science');
+
+1 row created.
+
+SQL> 
+SQL> /*INSERT 7: Create some board members */
+SQL> 
+SQL> INSERT INTO member
+  2  VALUES(900006, 'elizabeth', 'holmes', 'eholmes@theranos.com',
+  3    87801, '5 leroy dr.', 'socorro',
+  4    TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+  5    SYSDATE, 'good');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO board_member
+  2  VALUES(900006, 'president');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO educator
+  2  VALUES(900006,'y', 'n', 'abott high', 'math');
+
+1 row created.
+
+SQL> 
+SQL> /* INSERT 8: Create meeting organized by president holmes */
+SQL> INSERT INTO meeting
+  2  VALUES('fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
+  3    900006);
+
+1 row created.
+
+SQL> 
+SQL> /* INSERT 9: Create non-member with the same name and email addr as member */
+SQL> INSERT INTO non_member
+  2  VALUES('elizabeth', 'holmes', 'eholmes@theranos.com',
+  3    87801, '5 leroy dr.', 'socorro', SYSDATE);
+
+1 row created.
+
+SQL> 
+SQL> -- IDK fake elizabeth holmes attends the meeting
+SQL> INSERT INTO visitor
+  2  VALUES('elizabeth', 'holmes', 'eholmes@theranos.com',
+  3    'fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
+  4    900006);
+
+1 row created.
+
+SQL> 
+SQL> /* INSERT 9: Create a member with the same name and addr as another */
+SQL> 
+SQL> INSERT INTO member
+  2  VALUES(900007, 'cole', 'coleson', 'cole@c.com', 87801, '5 leroy dr.', 'socorro',
+  3   TO_DATE('2027-3-11', 'YYYY-MM-DD'), TO_DATE('2016-3-11', 'YYYY-MM-DD'),
+  4   SYSDATE, 'good');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO educator
+  2  VALUES(900007,'n', 'y', 'abott high', 'none');
 
 1 row created.
 
@@ -355,15 +457,15 @@ SQL> * (i) parent but not educator, (ii) educator but not parent,
 SQL> * and (iii) both a parent and an educator
 SQL> **/
 SQL> 
-SQL> SELECT COUNT(*) AS "Parent But Not Parent Count" from (
+SQL> SELECT COUNT(*) AS "Parent But Not Educator Count" from (
   2    SELECT member_id from parent
   3    MINUS -- set difference
   4    SELECT member_id from educator
   5  );
 
-Parent But Not Parent Count                                                     
----------------------------                                                     
-                          2                                                     
+Parent But Not Educator Count                                                   
+-----------------------------                                                   
+                            2                                                   
 
 SQL> 
 SQL> SELECT COUNT(*) AS "Educator But Not Parent Count" from (
@@ -374,7 +476,7 @@ SQL> SELECT COUNT(*) AS "Educator But Not Parent Count" from (
 
 Educator But Not Parent Count                                                   
 -----------------------------                                                   
-                            1                                                   
+                            3                                                   
 
 SQL> 
 SQL> SELECT COUNT(*) AS "Both Parent and Eduator Count" from (
@@ -387,7 +489,7 @@ SQL> SELECT COUNT(*) AS "Both Parent and Eduator Count" from (
 
 Both Parent and Eduator Count                                                   
 -----------------------------                                                   
-                            1                                                   
+                            2                                                   
 
 SQL> 
 SQL> /**
@@ -407,6 +509,7 @@ SQL> SELECT * FROM (
 ---------- -------------------- -------------------- ---------- --------------- 
     900001 daniel               plainview                     9 MONTH TO EXPIRY 
     900003 gary                 garyson                      24 MONTH TO EXPIRY 
+    900006 elizabeth            holmes                        3 MONTH TO EXPIRY 
 
 SQL> 
 SQL> SELECT * FROM (
@@ -421,6 +524,74 @@ SQL> SELECT * FROM (
     900002 royal                tennenbaum                  -31 EXPIRED         
 
 SQL> 
+SQL> /**
+SQL> * QUERY 3: list the ID, first, and last names of members who are (current or former)
+SQL> * teachers of science / math as well as parent and teach at a school
+SQL> * attended by one or more of their children. (If a teacher has only one
+SQL> * child, then that child must attend; if a teacher has two children, then both must attend.)
+SQL> **/
+SQL> 
+SQL> -- NOTE: This is messy maybe rewrite with natural join?
+SQL> SELECT m.member_id, fname, lname, e.teach_sci_or_math
+  2  FROM educator e, member m
+  3  WHERE e.school_name = all
+  4    (SELECT mc.school_name
+  5  	FROM member_child mc
+  6  	WHERE mc.member_id = e.member_id
+  7    )
+  8  AND (e.teach_sci_or_math != 'none') -- Must teach at least one
+  9  AND (e.member_id = m.member_id);
+
+ MEMBER_ID FNAME                LNAME                TEACH_SCI_OR_MATH          
+---------- -------------------- -------------------- --------------------       
+    900005 cole                 coleson              science                    
+    900006 elizabeth            holmes               math                       
+
+SQL> 
+SQL> /**
+SQL> * QUERY 4: if either two members have the same first name, last name, and email
+SQL> * address, or a non-member and a member share those three items, then
+SQL> * print those three items for each pair; add a string BOTH MEMBERS
+SQL> * in the first case and ONE NON-MEMBER in the other. The items for
+SQL> * BOTH-MEMBERS should appear first ordered by first name followed
+SQL> * by the rest ordered similarly.
+SQL> **/
+SQL> 
+SQL> SELECT fname, lname, email, 'ONE MEMBER'
+  2  FROM member m
+  3  WHERE EXISTS
+  4    (SELECT *
+  5    FROM non_member nm
+  6    WHERE nm.fname = m.fname
+  7    AND nm.lname = m.lname
+  8    AND nm.email = m.email
+  9    )
+ 10  UNION ALL
+ 11  SELECT fname, lname, email, 'BOTH MEMBER'
+ 12  FROM member m1
+ 13  WHERE EXISTS
+ 14    (SELECT *
+ 15    FROM member m2
+ 16    WHERE m1.fname = m2.fname
+ 17    AND m1.lname = m2.lname
+ 18    AND m1.email = m2.email
+ 19    AND m1.member_id != m2.member_id
+ 20    );
+
+FNAME                LNAME                EMAIL                                 
+-------------------- -------------------- ------------------------------        
+'ONEMEMBER'                                                                     
+-----------                                                                     
+elizabeth            holmes               eholmes@theranos.com                  
+ONE MEMBER                                                                      
+                                                                                
+cole                 coleson              cole@c.com                            
+BOTH MEMBER                                                                     
+                                                                                
+cole                 coleson              cole@c.com                            
+BOTH MEMBER                                                                     
+                                                                                
+
 SQL> 
 SQL> -- END: Cleanup by dropping all tables
 SQL> @cleanup
