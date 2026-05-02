@@ -18,6 +18,9 @@ SPOOL cj_johnson
 -- STEP 2: Populate database
 @populate
 
+-- STEP 3: Execute queries
+@queries
+
 -- END: Cleanup by dropping all tables
 @cleanup
 
