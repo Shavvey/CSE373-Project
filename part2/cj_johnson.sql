@@ -59,6 +59,7 @@ create table parent(
   member_id DECIMAL(4,0) NOT NULL, -- parent id references foregin key of memeber
   CONSTRAINT parent_pk PRIMARY KEY (member_id),
   CONSTRAINT parent_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id)
+  -- TODO: Figure out a way to add an inclusion dependency here
 );
 
 create table member_child(
@@ -87,13 +88,14 @@ create table educator(
   is_teacher  CHAR(1) NOT NULL CHECK (is_teacher in ('Y', 'N')), -- NOTE: collasping educator subclasses via boolean flags
   is_admin    CHAR(1) NOT NULL CHECK (is_admin in ('Y', 'N')),
   school_name VARCHAR(100) NOT NULL,
-  teach_sci_or_math VARCHAR(100) NOT NULL CHECK (subject in ('SCIENCE', 'MATH', 'BOTH', 'NONE')),
+  -- NOTE: Field is for educators that either teach or taught math or science, look at constraints to see how I enforce this
+  teach_sci_or_math VARCHAR(100) NOT NULL CHECK (teach_sci_or_math in ('SCIENCE', 'MATH', 'BOTH', 'NONE')),
   CONSTRAINT educator_pk PRIMARY KEY (member_id),
   CONSTRAINT educator_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
   CONSTRAINT educator_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
-  CONSTRAINT admin_teaher_disjoint_and_total_coverage CHECK ((is_teacher = 'N' AND is_admin = 'Y') 
+  CONSTRAINT admin_teaher_disjoint_and_total_coverage CHECK ((is_teacher = 'N' AND is_admin = 'Y')
     OR (is_teacher = 'Y' AND is_admin = 'N')), -- NOTE: each educator instance must either be admin or teacher, cannot overlap and cannot be a different instance
-  CONSTRAINT admin_does_not_teach CHECK(is_admin = 'Y' AND subject = 'NONE')) -- NOTE: administrators do not teach subjects, must be none
+  CONSTRAINT admin_does_not_teach CHECK (is_admin = 'Y' AND teach_sci_or_math = 'NONE') -- NOTE: administrators do not teach subjects, must be none
 );
 
 
@@ -125,7 +127,7 @@ create table non_member(
   CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
 );
 
-create talbe non_member_child(
+create table non_member_child(
   child_fname VARCHAR(100) NOT NULL,
   child_lname VARCHAR(100) NOT NULL,
   school_name VARCHAR(100) NOT NULL,

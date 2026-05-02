@@ -35,7 +35,9 @@ drop table visitor -- drop VISITOR
 drop table non_member cascade constraints -- drop NON MEMBER
 ;
 
-drop table meeting cascade constraints -- drop MEMBER
+drop table non_member_child cascade constraints -- drop NON MEMBER CHILD
 ;
 
+drop table meeting cascade constraints -- drop MEMBER
+;
 
