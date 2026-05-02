@@ -1,9 +1,6 @@
 /* NOTE: This script is to quickly cleanup the schema so that the
  script file `cj_johnson.sql` can run again. */
 
--- set up spooling, if not already enabled
-set echo ON
-set spool cj_johnson
 
 drop table member cascade constraints -- drop MEMBER
 ;
