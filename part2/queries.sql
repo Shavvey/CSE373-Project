@@ -39,9 +39,18 @@ SELECT COUNT(*) AS "Both Parent and Eduator Count" from (
 * expiration dates, of all the members whose member is going to expire within
 * a month followed by those whose membershiop has 
 **/
-SELECT member_id, member_expr, SYSDATE, member_expr - SYSDATE
-FROM member;
 
-SELECT member_id, fname, lname, 'MONTH TO EXPIRY'
-FROM member
-WHERE member_expr - SYSDATE <= 28; -- NOTE: expr within a month
+SELECT * FROM (
+  SELECT member_id, fname, lname, 
+    TRUNC(member_expr) - TRUNC(SYSDATE) as days, 'MONTH TO EXPIRY'
+  FROM member
+  )
+WHERE days > 0 and days < 30;
+
+SELECT * FROM (
+  SELECT member_id, fname, lname, 
+    TRUNC(member_expr) - TRUNC(SYSDATE) as days, 'EXPIRED'
+  FROM member
+  )
+WHERE days < 0;
+

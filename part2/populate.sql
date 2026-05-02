@@ -55,7 +55,7 @@ VALUES(900002, 'richie', 'tennenbaum', 'abott middle', SYSDATE);
 
 INSERT INTO member
 VALUES(900003, 'gary', 'garyson', 87801, '2 leroy dr.', 'socorro', 
- TO_DATE('2016-07-26', 'YYYY-MM-DD'), TO_DATE('2026-07-26', 'YYYY-MM-DD'),
+ TO_DATE('2026-05-26', 'YYYY-MM-DD'), TO_DATE('2016-05-26', 'YYYY-MM-DD'),
  SYSDATE, 'good');
 
 -- Insert educator portion, this time it's a school admin
@@ -65,7 +65,7 @@ VALUES(900003, 'n', 'y', 'abott high', 'none');
 /* INSERT 5: Member that is both a parent and an educator */
 INSERT INTO member
 VALUES(900004, 'john', 'johnson', 87801, '3 leroy dr.', 'socorro', 
- TO_DATE('2026-11-11', 'YYYY-MM-DD'), TO_DATE('2026-11-11', 'YYYY-MM-DD'),
+ TO_DATE('2026-11-11', 'YYYY-MM-DD'), TO_DATE('2016-11-11', 'YYYY-MM-DD'),
  SYSDATE, 'good');
 
 -- Create parent info

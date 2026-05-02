@@ -13,16 +13,16 @@ SQL> **/
 SQL> 
 SQL> create table member(
   2    member_id    DECIMAL(7,0) NOT NULL, -- 4 digits, no digits after the decimal place
-  3    fname	    VARCHAR(100) NOT NULL,
-  4    lname	    VARCHAR(100) NOT NULL,
+  3    fname	    VARCHAR(20) NOT NULL,
+  4    lname	    VARCHAR(20) NOT NULL,
   5    zip	    DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable
-  6    street	    VARCHAR(100) NOT NULL,
-  7    city	    VARCHAR(100) NOT NULL,
+  6    street	    VARCHAR(20) NOT NULL,
+  7    city	    VARCHAR(20) NOT NULL,
   8    member_expr  DATE NOT NULL, -- NOTE: When the member's expiration date is
   9    date_joined  DATE NOT NULL,
  10    date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
  11    -- NOTE: Tracks the standing of each member
- 12    standing     VARCHAR(100) NOT NULL CHECK (standing in ('good', 'poor')),
+ 12    standing     VARCHAR(20) NOT NULL CHECK (standing in ('good', 'poor')),
  13    CONSTRAINT member_pk PRIMARY KEY (member_id), -- primary key constraint
  14    CONSTRAINT has_member_id_prefix CHECK (member_id LIKE '900%') -- make sure each ID has 900 prefix
  15    -- NOTE: last name and first can also be used for identification, put ID is preferred and designated as key
@@ -32,9 +32,9 @@ Table created.
 
 SQL> 
 SQL> create table school(
-  2    school_name	VARCHAR(100) NOT NULL,
-  3    principle_lname	VARCHAR(100) NOT NULL,
-  4    principle_fname	VARCHAR(100) NOT NULL,
+  2    school_name	VARCHAR(20) NOT NULL,
+  3    principle_lname	VARCHAR(20) NOT NULL,
+  4    principle_fname	VARCHAR(20) NOT NULL,
   5    is_middleschool	CHAR(1) NOT NULL CHECK (is_middleschool in ('y', 'n')),
   6    is_highschool	CHAR(1) NOT NULL CHECK (is_highschool in ('y', 'n')),
   7    CONSTRAINT school_pk PRIMARY KEY (school_name) -- school name is unique
@@ -46,7 +46,7 @@ SQL>
 SQL> -- Tracks volunteered members to be a school liason
 SQL> create table volunteer_liason(
   2    member_id   DECIMAL(7,0) NOT NULL,
-  3    school_name VARCHAR(100) NOT NULL,
+  3    school_name VARCHAR(20) NOT NULL,
   4    CONSTRAINT volunteer_liason_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
   5    CONSTRAINT volunteer_liason_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
   6    CONSTRAINT volunteer_liason_pk PRIMARY KEY (member_id, school_name)
@@ -60,7 +60,7 @@ SQL> -- NOTE: From ER diagram, this relationship has all partial participation
 SQL> -- so we need to invest in a separate a
 SQL> create table liason(
   2    member_id   DECIMAL(7,0) NOT NULL,
-  3    school_name VARCHAR(100) NOT NULL,
+  3    school_name VARCHAR(20) NOT NULL,
   4    CONSTRAINT liason_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
   5    CONSTRAINT liason_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
   6    CONSTRAINT liason_pk PRIMARY KEY (member_id),
@@ -83,9 +83,9 @@ SQL>
 SQL> 
 SQL> create table member_child(
   2    member_id      DECIMAL(7,0) NOT NULL,
-  3    child_fname    VARCHAR(100) NOT NULL,
-  4    child_lname    VARCHAR(100) NOT NULL,
-  5    school_name    VARCHAR(100) NOT NULL,
+  3    child_fname    VARCHAR(20) NOT NULL,
+  4    child_lname    VARCHAR(20) NOT NULL,
+  5    school_name    VARCHAR(20) NOT NULL,
   6    date_of_record DATE NOT NULL, -- NOTE: When this info was learned and put inside database
   7    CONSTRAINT member_child_pk PRIMARY KEY(child_fname, child_lname, member_id),
   8    CONSTRAINT member_child_member_fk FOREIGN KEY (member_id) REFERENCES parent(member_id)
@@ -114,9 +114,9 @@ SQL> create table educator(
   2    member_id   DECIMAL(7,0) NOT NULL, -- parent id references foregin key of memeber
   3    is_teacher  CHAR(1) NOT NULL CHECK (is_teacher in ('y', 'n')), -- NOTE: collasping educator subclasses via boolean flags
   4    is_admin    CHAR(1) NOT NULL CHECK (is_admin in ('y', 'n')),
-  5    school_name VARCHAR(100) NOT NULL,
+  5    school_name VARCHAR(20) NOT NULL,
   6    -- NOTE: Field is for educators that either teach or taught math or science, look at constraints to see how I enforce this
-  7    teach_sci_or_math VARCHAR(100) NOT NULL CHECK (teach_sci_or_math in ('science', 'math', 'both', 'none')),
+  7    teach_sci_or_math VARCHAR(20) NOT NULL CHECK (teach_sci_or_math in ('science', 'math', 'both', 'none')),
   8    CONSTRAINT educator_pk PRIMARY KEY (member_id),
   9    CONSTRAINT educator_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
  10    CONSTRAINT educator_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name),
@@ -145,8 +145,8 @@ Table created.
 
 SQL> 
 SQL> create table meeting(
-  2    meet_location VARCHAR(100) NOT NULL,
-  3    meet_date     VARCHAR(100) NOT NULL,
+  2    meet_location VARCHAR(20) NOT NULL,
+  3    meet_date     VARCHAR(20) NOT NULL,
   4    member_id     DECIMAL(7,0) NOT NULL,
   5    CONSTRAINT meeting_pk PRIMARY KEY (meet_location, meet_date),
   6    CONSTRAINT meeting_board_mem_fk FOREIGN KEY (member_id) REFERENCES board_member(member_id)
@@ -156,13 +156,13 @@ Table created.
 
 SQL> 
 SQL> create table non_member(
-  2    fname	      VARCHAR(100) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
-  3    lname	      VARCHAR(100) NOT NULL,
-  4    email	      VARCHAR(100) NOT NULL,
+  2    fname	      VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
+  3    lname	      VARCHAR(20) NOT NULL,
+  4    email	      VARCHAR(20) NOT NULL,
   5    zip	      DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable, but decimal is easier for comparison
   6    date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
-  7    street	      VARCHAR(100) NOT NULL,
-  8    city	      VARCHAR(100) NOT NULL,
+  7    street	      VARCHAR(20) NOT NULL,
+  8    city	      VARCHAR(20) NOT NULL,
   9    CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
  10  );
 
@@ -170,12 +170,12 @@ Table created.
 
 SQL> 
 SQL> create table non_member_child(
-  2    non_mem_fname VARCHAR(100) NOT NULL,
-  3    non_mem_lname VARCHAR(100) NOT NULL,
-  4    non_mem_email VARCHAR(100) NOT NULL,
-  5    child_fname   VARCHAR(100) NOT NULL,
-  6    child_lname   VARCHAR(100) NOT NULL,
-  7    school_name   VARCHAR(100) NOT NULL,
+  2    non_mem_fname VARCHAR(20) NOT NULL,
+  3    non_mem_lname VARCHAR(20) NOT NULL,
+  4    non_mem_email VARCHAR(20) NOT NULL,
+  5    child_fname   VARCHAR(20) NOT NULL,
+  6    child_lname   VARCHAR(20) NOT NULL,
+  7    school_name   VARCHAR(20) NOT NULL,
   8    CONSTRAINT non_member_child_school_fk FOREIGN KEY (school_name)
   9  	 REFERENCES school(school_name),
  10    CONSTRAINT non_member_non_member_child_fk FOREIGN KEY (non_mem_fname,
@@ -186,11 +186,11 @@ Table created.
 
 SQL> 
 SQL> create table visitor(
-  2    fname	     VARCHAR(100) NOT NULL, -- NOTE: maybe I should prefix this to avoid unwanted natural joins
-  3    lname	     VARCHAR(100) NOT NULL,
-  4    email	     VARCHAR(100) NOT NULL,
-  5    meet_location VARCHAR(100) NOT NULL,
-  6    meet_date     VARCHAR(100) NOT NULL,
+  2    fname	     VARCHAR(20) NOT NULL, -- NOTE: maybe I should prefix this to avoid unwanted natural joins
+  3    lname	     VARCHAR(20) NOT NULL,
+  4    email	     VARCHAR(20) NOT NULL,
+  5    meet_location VARCHAR(20) NOT NULL,
+  6    meet_date     VARCHAR(20) NOT NULL,
   7    member_id     DECIMAL(7,0) NOT NULL,
   8    CONSTRAINT visitor_non_mem_fk FOREIGN KEY (fname, lname, email)
   9  	 REFERENCES non_member(fname, lname, email),
@@ -240,7 +240,7 @@ SQL> /* INSERT 2: Member that is only a parent */
 SQL> INSERT INTO member
   2  VALUES(900001, 'daniel', 'plainview', 87801,
   3    '1 leroy dr.', 'socorro', TO_DATE('2026-05-11', 'YYYY-MM-DD'),
-  4    TO_DATE('2023-06-11', 'YYYY-MM-DD'), SYSDATE, 'good');
+  4    TO_DATE('2023-05-11', 'YYYY-MM-DD'), SYSDATE, 'good');
 
 1 row created.
 
@@ -287,7 +287,7 @@ SQL> /* INSERT 4: Member that is only an educator */
 SQL> 
 SQL> INSERT INTO member
   2  VALUES(900003, 'gary', 'garyson', 87801, '2 leroy dr.', 'socorro',
-  3   TO_DATE('2016-07-13', 'YYYY-MM-DD'), TO_DATE('2026-05-13', 'YYYY-MM-DD'),
+  3   TO_DATE('2026-05-26', 'YYYY-MM-DD'), TO_DATE('2016-05-26', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
 1 row created.
@@ -303,7 +303,7 @@ SQL>
 SQL> /* INSERT 5: Member that is both a parent and an educator */
 SQL> INSERT INTO member
   2  VALUES(900004, 'john', 'johnson', 87801, '3 leroy dr.', 'socorro',
-  3   TO_DATE('2026-11-11', 'YYYY-MM-DD'), TO_DATE('2026-11-11', 'YYYY-MM-DD'),
+  3   TO_DATE('2026-11-11', 'YYYY-MM-DD'), TO_DATE('2016-11-11', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
 1 row created.
@@ -395,21 +395,33 @@ SQL> * QUERY 2: Display the ID, first and last names, and membership
 SQL> * expiration dates, of all the members whose member is going to expire within
 SQL> * a month followed by those whose membershiop has
 SQL> **/
-SQL> SELECT member_id, member_expr, SYSDATE, member_expr - SYSDATE
-  2  FROM member;
+SQL> 
+SQL> SELECT * FROM (
+  2    SELECT member_id, fname, lname,
+  3  	 TRUNC(member_expr) - TRUNC(SYSDATE) as days, 'MONTH TO EXPIRY'
+  4    FROM member
+  5    )
+  6  WHERE days > 0 and days < 30;
 
- MEMBER_ID MEMBER_EX SYSDATE   MEMBER_EXPR-SYSDATE                              
----------- --------- --------- -------------------                              
-    900001 11-MAY-26 02-MAY-26          8.96361111                              
-    900002 01-APR-26 02-MAY-26          -31.036389                              
-    900003 13-JUL-16 02-MAY-26          -3580.0364                              
-    900004 11-NOV-26 02-MAY-26          192.963611                              
+ MEMBER_ID FNAME                LNAME                      DAYS 'MONTHTOEXPIRY' 
+---------- -------------------- -------------------- ---------- --------------- 
+    900001 daniel               plainview                     9 MONTH TO EXPIRY 
+    900003 gary                 garyson                      24 MONTH TO EXPIRY 
 
 SQL> 
-SQL> SELECT member_id, fname, lname, 'MONTH TO EXPIRY'
-  2  FROM member
-  3  WHERE member_expr - SYSDATE <= 28; -- NOTE: expr within a month
-  4  
+SQL> SELECT * FROM (
+  2    SELECT member_id, fname, lname,
+  3  	 TRUNC(member_expr) - TRUNC(SYSDATE) as days, 'EXPIRED'
+  4    FROM member
+  5    )
+  6  WHERE days < 0;
+
+ MEMBER_ID FNAME                LNAME                      DAYS 'EXPIRE         
+---------- -------------------- -------------------- ---------- -------         
+    900002 royal                tennenbaum                  -31 EXPIRED         
+
+SQL> 
+SQL> 
 SQL> -- END: Cleanup by dropping all tables
 SQL> @cleanup
 SQL> /* NOTE: This script is to quickly cleanup the schema so that the
