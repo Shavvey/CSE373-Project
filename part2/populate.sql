@@ -24,102 +24,104 @@ VALUES('abott high', 'joerge', 'beforeman', 'y', 'n');
 
 /* INSERT 2: Member that is only a parent */
 INSERT INTO member
-VALUES(900001, 'daniel', 'plainview', 'dplain@gmail.com', 87801, 
+VALUES(id_seq.NEXTVAL, 'daniel', 'plainview', 'dplain@gmail.com', 87801, 
   '1 leroy dr.', 'socorro', TO_DATE('2026-05-11', 'YYYY-MM-DD'), 
   TO_DATE('2023-05-11', 'YYYY-MM-DD'), SYSDATE, 'good');
 
 -- Add to parent relation
 INSERT INTO parent
-VALUES(900001);
+VALUES(id_seq.CURRVAL);
 
 -- Add child in member_child relation
 INSERT INTO member_child
-VALUES(900001, 'h.w.', 'plainview', 'abott middle', SYSDATE);
+VALUES(id_seq.CURRVAL, 'h.w.', 'plainview',
+  'abott middle', TO_DATE('2022-08-17', 'YYYY-MM-DD'));
 
 /* INSERT 3: Another member that is only a parent */
 
 INSERT INTO member
-VALUES(900002, 'royal', 'tennenbaum', 'royalt@gmail.com', 87801, 
+VALUES(id_seq.NEXTVAL, 'royal', 'tennenbaum', 'royalt@gmail.com', 87801, 
   '1 leroy dr.', 'socorro', TO_DATE('2026-04-01', 'YYYY-MM-DD'), 
-  TO_DATE('2023-04-01', 'YYYY-MM-DD'), SYSDATE, 'poor');
+  TO_DATE('2023-04-01', 'YYYY-MM-DD'), SYSDATE, 'good');
 
 -- Add to parent relation
 INSERT INTO parent
-VALUES(900002);
+VALUES(id_seq.CURRVAL);
 
 -- Add child in member_child relation
 INSERT INTO member_child
-VALUES(900002, 'richie', 'tennenbaum', 'abott middle', SYSDATE);
+VALUES(id_seq.CURRVAL, 'richie', 'tennenbaum', 'abott middle', SYSDATE);
 
 /* INSERT 4: Member that is only an educator */
 
 INSERT INTO member
-VALUES(900003, 'gary', 'garyson', 'ggary@gary.com', 87801, '2 leroy dr.', 'socorro', 
+VALUES(id_seq.NEXTVAL, 'gary', 'garyson', 'ggary@gary.com', 87801, '2 leroy dr.', 'socorro', 
  TO_DATE('2026-05-26', 'YYYY-MM-DD'), TO_DATE('2016-05-26', 'YYYY-MM-DD'),
  SYSDATE, 'good');
 
 -- Insert educator portion, this time it's a school admin
 INSERT INTO educator
-VALUES(900003, 'n', 'y', 'abott high', 'none');
+VALUES(id_seq.CURRVAL, 'n', 'y', 'abott high', 'none');
 
 /* INSERT 5: Member that is both a parent and an educator */
 INSERT INTO member
-VALUES(900004, 'john', 'johnson', 'jjohn@john.com', 87801, '3 leroy dr.', 'socorro', 
+VALUES(id_seq.NEXTVAL, 'john', 'johnson', 'jjohn@john.com', 87801, '3 leroy dr.', 'socorro', 
  TO_DATE('2026-11-11', 'YYYY-MM-DD'), TO_DATE('2016-11-11', 'YYYY-MM-DD'),
  SYSDATE, 'good');
 
 -- Create parent info
 INSERT INTO member_child
-VALUES(900004, 'john jr.', 'johnson', 'abott middle', SYSDATE);
+VALUES(id_seq.CURRVAL, 'john jr.', 'johnson', 'abott middle', SYSDATE);
 
 -- Create parent info
 INSERT INTO parent
-VALUES(900004);
+VALUES(id_seq.CURRVAL);
 
 -- Create educator info
 INSERT INTO educator
-VALUES(900004, 'y', 'n', 'abott high', 'science');
+VALUES(id_seq.CURRVAL, 'y', 'n', 'abott high', 'science');
 
 /* INSERT 6: Member that is both a parent and an educator */
 
 INSERT INTO member
-VALUES(900005, 'cole', 'coleson', 'cole@c.com', 87801, '4 leroy dr.', 'socorro', 
+VALUES(id_seq.NEXTVAL, 'cole', 'coleson', 'cole@c.com', 87801, '4 leroy dr.', 'socorro', 
  TO_DATE('2027-3-11', 'YYYY-MM-DD'), TO_DATE('2016-3-11', 'YYYY-MM-DD'),
  SYSDATE, 'good');
 
 -- Create parent info
 INSERT INTO member_child
-VALUES(900005, 'cole jr.', 'coleson', 'abott high', SYSDATE);
+VALUES(id_seq.CURRVAL, 'cole jr.', 'coleson', 'abott high', SYSDATE);
 
 INSERT INTO member_child
-VALUES(900005, 'cole jr. II', 'coleson', 'abott high', SYSDATE);
+VALUES(id_seq.CURRVAL, 'cole jr. II', 'coleson', 'abott high', SYSDATE);
 
 -- Create parent info
 INSERT INTO parent
-VALUES(900005);
+VALUES(id_seq.CURRVAL);
 
 -- Create educator info
 INSERT INTO educator
-VALUES(900005, 'y', 'n', 'abott high', 'science');
+VALUES(id_seq.CURRVAL, 'y', 'n', 'abott high', 'science');
 
 /*INSERT 7: Create some board members */
 
 INSERT INTO member
-VALUES(900006, 'elizabeth', 'holmes', 'eholmes@theranos.com', 
+VALUES(id_seq.NEXTVAL, 'elizabeth', 'holmes', 'eholmes@theranos.com', 
   87801, '5 leroy dr.', 'socorro',
   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
   SYSDATE, 'good');
 
 INSERT INTO board_member
-VALUES(900006, 'president'); 
+VALUES(id_seq.CURRVAL, 'president'); 
 
 INSERT INTO educator
-VALUES(900006,'y', 'n', 'abott high', 'math');
+VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+
 
 /* INSERT 8: Create meeting organized by president holmes */
 INSERT INTO meeting
 VALUES('fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
-  900006);
+  id_seq.CURRVAL);
 
 /* INSERT 9: Create non-member with the same name and email addr as member */
 INSERT INTO non_member
@@ -130,17 +132,43 @@ VALUES('elizabeth', 'holmes', 'eholmes@theranos.com',
 INSERT INTO visitor
 VALUES('elizabeth', 'holmes', 'eholmes@theranos.com',
   'fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
-  900006);
+  id_seq.CURRVAL);
 
 /* INSERT 9: Create a member with the same name and addr as another */
 
 INSERT INTO member
-VALUES(900007, 'cole', 'coleson', 'cole@c.com', 87801, '5 leroy dr.', 'socorro', 
+VALUES(id_seq.NEXTVAL, 'cole', 'coleson', 'cole@c.com', 87801, '5 leroy dr.', 'socorro', 
  TO_DATE('2027-3-11', 'YYYY-MM-DD'), TO_DATE('2016-3-11', 'YYYY-MM-DD'),
  SYSDATE, 'good');
 
 INSERT INTO educator
-VALUES(900007,'n', 'y', 'abott high', 'none');
+VALUES(id_seq.CURRVAL,'n', 'y', 'abott high', 'none');
+
+-- FAKE INSERTS: TEST OUT TRIGGER, THESE SHOULD NOT INSERT
+-- (TESTED ON MARCH 2, 2025 -- PASSED)
+-- INSERT INTO member
+-- VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com', 
+--   87801, '5 leroy dr.', 'socorro',
+--   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+--   SYSDATE, 'poor');
+-- 
+-- INSERT INTO board_member
+-- VALUES(id_seq.CURRVAL, 'secretary'); 
+-- 
+-- INSERT INTO educator
+-- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+-- 
+-- INSERT INTO member
+-- VALUES(id_seq.NEXTVAL, 'elija', 'holmes', 'eholmes@theranos.com', 
+--   87801, '5 leroy dr.', 'socorro',
+--   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+--   SYSDATE, 'good');
+-- 
+-- INSERT INTO board_member
+-- VALUES(id_seq.CURRVAL, 'president'); 
+-- 
+-- INSERT INTO educator
+-- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
 
 -- FINALLY commit to populate transaction
 commit;

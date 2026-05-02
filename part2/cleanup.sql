@@ -1,6 +1,8 @@
 /* NOTE: This script is to quickly cleanup the schema so that the
  script file `cj_johnson.sql` can run again. */
 
+drop sequence id_seq -- drop automatic ID sequence
+;
 
 drop table member cascade constraints -- drop MEMBER
 ;

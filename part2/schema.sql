@@ -8,19 +8,21 @@
 * completed by myself.
 **/
 
+CREATE SEQUENCE id_seq START WITH 9000001 INCREMENT BY 1;
+
 create table member(
-  member_id    DECIMAL(7,0) NOT NULL, -- 4 digits, no digits after the decimal place
-  fname        VARCHAR(20) NOT NULL,
-  lname        VARCHAR(20) NOT NULL,
-  email        VARCHAR(30) NOT NULL,
-  zip          DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable
-  street       VARCHAR(20) NOT NULL,
-  city         VARCHAR(20) NOT NULL,  
-  member_expr  DATE NOT NULL, -- NOTE: When the member's expiration date is
-  date_joined  DATE NOT NULL,
+  member_id      DECIMAL(7,0) DEFAULT id_seq.NEXTVAL,
+  fname          VARCHAR(20) NOT NULL,
+  lname          VARCHAR(20) NOT NULL,
+  email          VARCHAR(30) NOT NULL,
+  zip            DECIMAL(5,0), -- NOTE: VARCHAR might also be acceptable
+  street         VARCHAR(20),
+  city           VARCHAR(20),
+  member_expr    DATE NOT NULL, -- NOTE: When the member's expiration date is
+  date_joined    DATE NOT NULL,
   date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
-  -- NOTE: Tracks the standing of each member
-  standing     VARCHAR(20) NOT NULL CHECK (standing in ('good', 'poor')),
+  standing      CHAR(4) NOT NULL CHECK (standing in ('good', 'poor')),
+  -- NOTE: Above tracks the standing of each member
   CONSTRAINT member_pk PRIMARY KEY (member_id), -- primary key constraint
   CONSTRAINT has_member_id_prefix CHECK (member_id LIKE '900%') -- make sure each ID has 900 prefix
   -- NOTE: last name and first can also be used for identification, put ID is preferred and designated as key
@@ -114,8 +116,7 @@ create table board_member(
   member_id DECIMAL(7,0) NOT NULL, -- parent id references foregin key of memeber
   role      VARCHAR(13) CHECK (role in ('president', 'secretary', 'treasurer', 'data manager')),
   CONSTRAINT board_mem_pk PRIMARY KEY (member_id),
-  CONSTRAINT board_mem_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
-  CONSTRAINT board_mem_role_unique UNIQUE(role) -- NOTE: ensures there is only one board member assigned to a role
+  CONSTRAINT board_mem_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id)
 );
 
 create table meeting(

@@ -11,19 +11,24 @@ SQL> * I certify that this assignment has been
 SQL> * completed by myself.
 SQL> **/
 SQL> 
+SQL> CREATE SEQUENCE id_seq START WITH 9000001 INCREMENT BY 1;
+
+Sequence created.
+
+SQL> 
 SQL> create table member(
-  2    member_id    DECIMAL(7,0) NOT NULL, -- 4 digits, no digits after the decimal place
-  3    fname	    VARCHAR(20) NOT NULL,
-  4    lname	    VARCHAR(20) NOT NULL,
-  5    email	    VARCHAR(30) NOT NULL,
-  6    zip	    DECIMAL(5,0) NOT NULL, -- NOTE: VARCHAR might also be acceptable
-  7    street	    VARCHAR(20) NOT NULL,
-  8    city	    VARCHAR(20) NOT NULL,
-  9    member_expr  DATE NOT NULL, -- NOTE: When the member's expiration date is
- 10    date_joined  DATE NOT NULL,
+  2    member_id      DECIMAL(7,0) DEFAULT id_seq.NEXTVAL,
+  3    fname	      VARCHAR(20) NOT NULL,
+  4    lname	      VARCHAR(20) NOT NULL,
+  5    email	      VARCHAR(30) NOT NULL,
+  6    zip	      DECIMAL(5,0), -- NOTE: VARCHAR might also be acceptable
+  7    street	      VARCHAR(20),
+  8    city	      VARCHAR(20),
+  9    member_expr    DATE NOT NULL, -- NOTE: When the member's expiration date is
+ 10    date_joined    DATE NOT NULL,
  11    date_of_record DATE NOT NULL, -- NOTE: When we first learned this info
- 12    -- NOTE: Tracks the standing of each member
- 13    standing     VARCHAR(20) NOT NULL CHECK (standing in ('good', 'poor')),
+ 12    standing      CHAR(4) NOT NULL CHECK (standing in ('good', 'poor')),
+ 13    -- NOTE: Above tracks the standing of each member
  14    CONSTRAINT member_pk PRIMARY KEY (member_id), -- primary key constraint
  15    CONSTRAINT has_member_id_prefix CHECK (member_id LIKE '900%') -- make sure each ID has 900 prefix
  16    -- NOTE: last name and first can also be used for identification, put ID is preferred and designated as key
@@ -138,9 +143,8 @@ SQL> create table board_member(
   2    member_id DECIMAL(7,0) NOT NULL, -- parent id references foregin key of memeber
   3    role	 VARCHAR(13) CHECK (role in ('president', 'secretary', 'treasurer', 'data manager')),
   4    CONSTRAINT board_mem_pk PRIMARY KEY (member_id),
-  5    CONSTRAINT board_mem_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id),
-  6    CONSTRAINT board_mem_role_unique UNIQUE(role) -- NOTE: ensures there is only one board member assigned to a role
-  7  );
+  5    CONSTRAINT board_mem_member_fk FOREIGN KEY (member_id) REFERENCES member(member_id)
+  6  );
 
 Table created.
 
@@ -205,7 +209,42 @@ SQL> create table visitor(
 Table created.
 
 SQL> 
-SQL> -- STEP 2: Populate database
+SQL> -- STEP 2: Hoist triggers
+SQL> @triggers
+SQL> CREATE OR REPLACE TRIGGER
+  2    board_member_president_aiur -- after insert or update, but before commit
+  3  BEFORE INSERT OR UPDATE
+  4  ON board_member
+  5  REFERENCING NEW AS n
+  6  for each row
+  7  DECLARE
+  8    mem_standing member.standing%type;
+  9    board_role board_member.role%type;
+ 10  BEGIN
+ 11   president_exists := false;
+ 12  -- Get standing
+ 13   SELECT standing INTO mem_standing
+ 14   FROM member
+ 15   WHERE :n.member_id = member.member_id;
+ 16    -- Trigger exception if president candidate is in poor standing
+ 17    IF (mem_standing = 'poor') THEN
+ 18  	 raise_application_error(-20001, 'Board member must be in good standing');
+ 19    END IF;
+ 20  END;
+ 21  /
+
+Warning: Trigger created with compilation errors.
+
+SQL> show errors
+Errors for TRIGGER BOARD_MEMBER_PRESIDENT_AIUR:
+
+LINE/COL ERROR                                                                  
+-------- -----------------------------------------------------------------      
+5/2      PL/SQL: Statement ignored                                              
+5/2      PLS-00201: identifier 'PRESIDENT_EXISTS' must be declared              
+SQL> 
+SQL> 
+SQL> -- STEP 3: Populate database
 SQL> @populate
 SQL> /**
 SQL> * CSE373 - Introduction to Databases - Project
@@ -239,7 +278,7 @@ SQL>
 SQL> 
 SQL> /* INSERT 2: Member that is only a parent */
 SQL> INSERT INTO member
-  2  VALUES(900001, 'daniel', 'plainview', 'dplain@gmail.com', 87801,
+  2  VALUES(id_seq.NEXTVAL, 'daniel', 'plainview', 'dplain@gmail.com', 87801,
   3    '1 leroy dr.', 'socorro', TO_DATE('2026-05-11', 'YYYY-MM-DD'),
   4    TO_DATE('2023-05-11', 'YYYY-MM-DD'), SYSDATE, 'good');
 
@@ -248,14 +287,15 @@ SQL> INSERT INTO member
 SQL> 
 SQL> -- Add to parent relation
 SQL> INSERT INTO parent
-  2  VALUES(900001);
+  2  VALUES(id_seq.CURRVAL);
 
 1 row created.
 
 SQL> 
 SQL> -- Add child in member_child relation
 SQL> INSERT INTO member_child
-  2  VALUES(900001, 'h.w.', 'plainview', 'abott middle', SYSDATE);
+  2  VALUES(id_seq.CURRVAL, 'h.w.', 'plainview',
+  3    'abott middle', TO_DATE('2022-08-17', 'YYYY-MM-DD'));
 
 1 row created.
 
@@ -263,23 +303,23 @@ SQL>
 SQL> /* INSERT 3: Another member that is only a parent */
 SQL> 
 SQL> INSERT INTO member
-  2  VALUES(900002, 'royal', 'tennenbaum', 'royalt@gmail.com', 87801,
+  2  VALUES(id_seq.NEXTVAL, 'royal', 'tennenbaum', 'royalt@gmail.com', 87801,
   3    '1 leroy dr.', 'socorro', TO_DATE('2026-04-01', 'YYYY-MM-DD'),
-  4    TO_DATE('2023-04-01', 'YYYY-MM-DD'), SYSDATE, 'poor');
+  4    TO_DATE('2023-04-01', 'YYYY-MM-DD'), SYSDATE, 'good');
 
 1 row created.
 
 SQL> 
 SQL> -- Add to parent relation
 SQL> INSERT INTO parent
-  2  VALUES(900002);
+  2  VALUES(id_seq.CURRVAL);
 
 1 row created.
 
 SQL> 
 SQL> -- Add child in member_child relation
 SQL> INSERT INTO member_child
-  2  VALUES(900002, 'richie', 'tennenbaum', 'abott middle', SYSDATE);
+  2  VALUES(id_seq.CURRVAL, 'richie', 'tennenbaum', 'abott middle', SYSDATE);
 
 1 row created.
 
@@ -287,7 +327,7 @@ SQL>
 SQL> /* INSERT 4: Member that is only an educator */
 SQL> 
 SQL> INSERT INTO member
-  2  VALUES(900003, 'gary', 'garyson', 'ggary@gary.com', 87801, '2 leroy dr.', 'socorro',
+  2  VALUES(id_seq.NEXTVAL, 'gary', 'garyson', 'ggary@gary.com', 87801, '2 leroy dr.', 'socorro',
   3   TO_DATE('2026-05-26', 'YYYY-MM-DD'), TO_DATE('2016-05-26', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
@@ -296,14 +336,14 @@ SQL> INSERT INTO member
 SQL> 
 SQL> -- Insert educator portion, this time it's a school admin
 SQL> INSERT INTO educator
-  2  VALUES(900003, 'n', 'y', 'abott high', 'none');
+  2  VALUES(id_seq.CURRVAL, 'n', 'y', 'abott high', 'none');
 
 1 row created.
 
 SQL> 
 SQL> /* INSERT 5: Member that is both a parent and an educator */
 SQL> INSERT INTO member
-  2  VALUES(900004, 'john', 'johnson', 'jjohn@john.com', 87801, '3 leroy dr.', 'socorro',
+  2  VALUES(id_seq.NEXTVAL, 'john', 'johnson', 'jjohn@john.com', 87801, '3 leroy dr.', 'socorro',
   3   TO_DATE('2026-11-11', 'YYYY-MM-DD'), TO_DATE('2016-11-11', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
@@ -312,21 +352,21 @@ SQL> INSERT INTO member
 SQL> 
 SQL> -- Create parent info
 SQL> INSERT INTO member_child
-  2  VALUES(900004, 'john jr.', 'johnson', 'abott middle', SYSDATE);
+  2  VALUES(id_seq.CURRVAL, 'john jr.', 'johnson', 'abott middle', SYSDATE);
 
 1 row created.
 
 SQL> 
 SQL> -- Create parent info
 SQL> INSERT INTO parent
-  2  VALUES(900004);
+  2  VALUES(id_seq.CURRVAL);
 
 1 row created.
 
 SQL> 
 SQL> -- Create educator info
 SQL> INSERT INTO educator
-  2  VALUES(900004, 'y', 'n', 'abott high', 'science');
+  2  VALUES(id_seq.CURRVAL, 'y', 'n', 'abott high', 'science');
 
 1 row created.
 
@@ -334,7 +374,7 @@ SQL>
 SQL> /* INSERT 6: Member that is both a parent and an educator */
 SQL> 
 SQL> INSERT INTO member
-  2  VALUES(900005, 'cole', 'coleson', 'cole@c.com', 87801, '4 leroy dr.', 'socorro',
+  2  VALUES(id_seq.NEXTVAL, 'cole', 'coleson', 'cole@c.com', 87801, '4 leroy dr.', 'socorro',
   3   TO_DATE('2027-3-11', 'YYYY-MM-DD'), TO_DATE('2016-3-11', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
@@ -343,27 +383,27 @@ SQL> INSERT INTO member
 SQL> 
 SQL> -- Create parent info
 SQL> INSERT INTO member_child
-  2  VALUES(900005, 'cole jr.', 'coleson', 'abott high', SYSDATE);
+  2  VALUES(id_seq.CURRVAL, 'cole jr.', 'coleson', 'abott high', SYSDATE);
 
 1 row created.
 
 SQL> 
 SQL> INSERT INTO member_child
-  2  VALUES(900005, 'cole jr. II', 'coleson', 'abott high', SYSDATE);
+  2  VALUES(id_seq.CURRVAL, 'cole jr. II', 'coleson', 'abott high', SYSDATE);
 
 1 row created.
 
 SQL> 
 SQL> -- Create parent info
 SQL> INSERT INTO parent
-  2  VALUES(900005);
+  2  VALUES(id_seq.CURRVAL);
 
 1 row created.
 
 SQL> 
 SQL> -- Create educator info
 SQL> INSERT INTO educator
-  2  VALUES(900005, 'y', 'n', 'abott high', 'science');
+  2  VALUES(id_seq.CURRVAL, 'y', 'n', 'abott high', 'science');
 
 1 row created.
 
@@ -371,7 +411,7 @@ SQL>
 SQL> /*INSERT 7: Create some board members */
 SQL> 
 SQL> INSERT INTO member
-  2  VALUES(900006, 'elizabeth', 'holmes', 'eholmes@theranos.com',
+  2  VALUES(id_seq.NEXTVAL, 'elizabeth', 'holmes', 'eholmes@theranos.com',
   3    87801, '5 leroy dr.', 'socorro',
   4    TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
   5    SYSDATE, 'good');
@@ -380,13 +420,45 @@ SQL> INSERT INTO member
 
 SQL> 
 SQL> INSERT INTO board_member
-  2  VALUES(900006, 'president');
+  2  VALUES(id_seq.CURRVAL, 'president');
+VALUES(id_seq.CURRVAL, 'president')
+       *
+ERROR at line 2:
+ORA-04098: trigger 'CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUR' is invalid and failed 
+re-validation 
+Help: https://docs.oracle.com/error-help/db/ora-04098/ 
+
+
+SQL> 
+SQL> INSERT INTO educator
+  2  VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
 
 1 row created.
 
 SQL> 
+SQL> -- TEST OUT TRIGGER, THESE SHOULD NOT INSERT
+SQL> INSERT INTO member
+  2  VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com',
+  3    87801, '5 leroy dr.', 'socorro',
+  4    TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+  5    SYSDATE, 'good');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO board_member
+  2  VALUES(id_seq.CURRVAL, 'president');
+VALUES(id_seq.CURRVAL, 'president')
+       *
+ERROR at line 2:
+ORA-04098: trigger 'CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUR' is invalid and failed 
+re-validation 
+Help: https://docs.oracle.com/error-help/db/ora-04098/ 
+
+
+SQL> 
 SQL> INSERT INTO educator
-  2  VALUES(900006,'y', 'n', 'abott high', 'math');
+  2  VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
 
 1 row created.
 
@@ -394,9 +466,14 @@ SQL>
 SQL> /* INSERT 8: Create meeting organized by president holmes */
 SQL> INSERT INTO meeting
   2  VALUES('fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
-  3    900006);
+  3    id_seq.CURRVAL);
+INSERT INTO meeting
+*
+ERROR at line 1:
+ORA-02291: integrity constraint (CJOHNSO.MEETING_BOARD_MEM_FK) violated - 
+parent key not found 
+Help: https://docs.oracle.com/error-help/db/ora-02291/ 
 
-1 row created.
 
 SQL> 
 SQL> /* INSERT 9: Create non-member with the same name and email addr as member */
@@ -411,15 +488,20 @@ SQL> -- IDK fake elizabeth holmes attends the meeting
 SQL> INSERT INTO visitor
   2  VALUES('elizabeth', 'holmes', 'eholmes@theranos.com',
   3    'fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
-  4    900006);
+  4    id_seq.CURRVAL);
+INSERT INTO visitor
+*
+ERROR at line 1:
+ORA-02291: integrity constraint (CJOHNSO.VISITOR_MEETING_FK) violated - parent 
+key not found 
+Help: https://docs.oracle.com/error-help/db/ora-02291/ 
 
-1 row created.
 
 SQL> 
 SQL> /* INSERT 9: Create a member with the same name and addr as another */
 SQL> 
 SQL> INSERT INTO member
-  2  VALUES(900007, 'cole', 'coleson', 'cole@c.com', 87801, '5 leroy dr.', 'socorro',
+  2  VALUES(id_seq.NEXTVAL, 'cole', 'coleson', 'cole@c.com', 87801, '5 leroy dr.', 'socorro',
   3   TO_DATE('2027-3-11', 'YYYY-MM-DD'), TO_DATE('2016-3-11', 'YYYY-MM-DD'),
   4   SYSDATE, 'good');
 
@@ -427,7 +509,7 @@ SQL> INSERT INTO member
 
 SQL> 
 SQL> INSERT INTO educator
-  2  VALUES(900007,'n', 'y', 'abott high', 'none');
+  2  VALUES(id_seq.CURRVAL,'n', 'y', 'abott high', 'none');
 
 1 row created.
 
@@ -439,7 +521,7 @@ Commit complete.
 
 SQL> 
 SQL> 
-SQL> -- STEP 3: Execute queries
+SQL> -- STEP 4: Execute queries
 SQL> @queries
 SQL> /**
 SQL> * CSE373 - Introduction to Databases - Project
@@ -476,7 +558,7 @@ SQL> SELECT COUNT(*) AS "Educator But Not Parent Count" from (
 
 Educator But Not Parent Count                                                   
 -----------------------------                                                   
-                            3                                                   
+                            4                                                   
 
 SQL> 
 SQL> SELECT COUNT(*) AS "Both Parent and Eduator Count" from (
@@ -507,9 +589,10 @@ SQL> SELECT * FROM (
 
  MEMBER_ID FNAME                LNAME                      DAYS 'MONTHTOEXPIRY' 
 ---------- -------------------- -------------------- ---------- --------------- 
-    900001 daniel               plainview                     9 MONTH TO EXPIRY 
-    900003 gary                 garyson                      24 MONTH TO EXPIRY 
-    900006 elizabeth            holmes                        3 MONTH TO EXPIRY 
+   9000001 daniel               plainview                     9 MONTH TO EXPIRY 
+   9000003 gary                 garyson                      24 MONTH TO EXPIRY 
+   9000006 elizabeth            holmes                        3 MONTH TO EXPIRY 
+   9000007 elliot               holmes                        3 MONTH TO EXPIRY 
 
 SQL> 
 SQL> SELECT * FROM (
@@ -521,7 +604,7 @@ SQL> SELECT * FROM (
 
  MEMBER_ID FNAME                LNAME                      DAYS 'EXPIRE         
 ---------- -------------------- -------------------- ---------- -------         
-    900002 royal                tennenbaum                  -31 EXPIRED         
+   9000002 royal                tennenbaum                  -31 EXPIRED         
 
 SQL> 
 SQL> /**
@@ -544,8 +627,9 @@ SQL> SELECT m.member_id, fname, lname, e.teach_sci_or_math
 
  MEMBER_ID FNAME                LNAME                TEACH_SCI_OR_MATH          
 ---------- -------------------- -------------------- --------------------       
-    900005 cole                 coleson              science                    
-    900006 elizabeth            holmes               math                       
+   9000005 cole                 coleson              science                    
+   9000006 elizabeth            holmes               math                       
+   9000007 elliot               holmes               math                       
 
 SQL> 
 SQL> /**
@@ -598,6 +682,11 @@ SQL> @cleanup
 SQL> /* NOTE: This script is to quickly cleanup the schema so that the
 SQL>  script file `cj_johnson.sql` can run again. */
 SQL> 
+SQL> drop sequence id_seq -- drop automatic ID sequence
+  2  ;
+
+Sequence dropped.
+
 SQL> 
 SQL> drop table member cascade constraints -- drop MEMBER
   2  ;

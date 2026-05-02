@@ -15,10 +15,13 @@ SPOOL cj_johnson
 -- STEP 1: Create relational schema
 @schema
 
--- STEP 2: Populate database
+-- STEP 2: Hoist triggers
+@triggers
+
+-- STEP 3: Populate database
 @populate
 
--- STEP 3: Execute queries
+-- STEP 4: Execute queries
 @queries
 
 -- END: Cleanup by dropping all tables
