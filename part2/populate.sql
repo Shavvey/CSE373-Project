@@ -146,29 +146,52 @@ VALUES(id_seq.CURRVAL,'n', 'y', 'abott high', 'none');
 
 -- FAKE INSERTS: TEST OUT TRIGGER, THESE SHOULD NOT INSERT
 -- (TESTED ON MARCH 2, 2025 -- PASSED)
--- INSERT INTO member
--- VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com', 
---   87801, '5 leroy dr.', 'socorro',
---   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
---   SYSDATE, 'poor');
--- 
--- INSERT INTO board_member
--- VALUES(id_seq.CURRVAL, 'secretary'); 
--- 
--- INSERT INTO educator
--- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
--- 
--- INSERT INTO member
--- VALUES(id_seq.NEXTVAL, 'elija', 'holmes', 'eholmes@theranos.com', 
---   87801, '5 leroy dr.', 'socorro',
---   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
---   SYSDATE, 'good');
--- 
--- INSERT INTO board_member
--- VALUES(id_seq.CURRVAL, 'president'); 
--- 
--- INSERT INTO educator
--- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+INSERT INTO member
+VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com', 
+  87801, '5 leroy dr.', 'socorro',
+  TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+  SYSDATE, 'poor');
+
+INSERT INTO board_member
+VALUES(id_seq.CURRVAL, 'secretary'); 
+
+INSERT INTO educator
+VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+
+INSERT INTO member
+VALUES(id_seq.NEXTVAL, 'elija', 'holmes', 'eholmes@theranos.com', 
+  87801, '5 leroy dr.', 'socorro',
+  TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+  SYSDATE, 'good');
+
+INSERT INTO board_member
+VALUES(id_seq.CURRVAL, 'president'); 
+
+INSERT INTO educator
+VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+
+/* INSERT 8: non member for is a teacher */
+INSERT INTO non_member
+VALUES('joe', 'joeson', 'jjoe@gmail.com', 87801, '3 leroy dr.',
+  'socorro', SYSDATE);
+
+INSERT INTO non_member_works_for
+VALUES('joe', 'joeson', 'jjoe@gmail.com', 'abott high', 'math');
+
+INSERT INTO meeting
+VALUES('que suava cafe', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
+  9000006);
+
+INSERT INTO visitor
+VALUES('joe', 'joeson', 'jjoe@gmail.com','fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
+  9000006)
+
+/* INSERT 9: Non member becomes a member, test out trigger */
+
+INSERT INTO member
+VALUES(id_seq.NEXTVAL, 'joe', 'joeson', 'jjoe@gmail.com', 87801, '3 leroy dr.',
+  'socorro', TO_DATE('2026-08-16', 'YYYY-MM-DD'), TO_DATE('2025-08-16', 'YYYY-MM-DD'),
+SYSDATE, 'good');
 
 -- FINALLY commit to populate transaction
 commit;

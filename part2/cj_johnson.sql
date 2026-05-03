@@ -21,8 +21,14 @@ SPOOL cj_johnson
 -- STEP 3: Populate database
 @populate
 
+-- STEP 4: Display populated tables
+@display
+
 -- STEP 4: Execute queries
 @queries
+
+-- STEP 5: Load in procedures
+@procedures
 
 -- END: Cleanup by dropping all tables
 @cleanup

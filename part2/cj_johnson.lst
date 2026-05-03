@@ -174,16 +174,36 @@ SQL> create table non_member(
 Table created.
 
 SQL> 
+SQL> create table non_member_child(
+  2    nm_fname 	 VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
+  3    nm_lname 	 VARCHAR(20) NOT NULL,
+  4    nm_email 	 VARCHAR(20) NOT NULL,
+  5    child_fname    VARCHAR(20) NOT NULL,
+  6    child_lname    VARCHAR(20) NOT NULL,
+  7    school_name    VARCHAR(20) NOT NULL,
+  8    date_of_record DATE NOT NULL, -- NOTE: When this info was learned and put inside database
+  9    CONSTRAINT non_member_child_pk PRIMARY KEY(child_fname, child_lname, nm_fname, nm_lname, nm_email),
+ 10    CONSTRAINT non_member_child_member_fk FOREIGN KEY (nm_fname, nm_lname, nm_email)
+ 11    REFERENCES non_member(fname, lname, email)
+ 12  	 INITIALLY DEFERRED DEFERRABLE,
+ 13    CONSTRAINT non_member_child_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name)
+ 14  	 INITIALLY DEFERRED DEFERRABLE
+ 15  );
+
+Table created.
+
+SQL> 
 SQL> create table non_member_works_for(
   2    fname	      VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
   3    lname	      VARCHAR(20) NOT NULL,
   4    email	      VARCHAR(20) NOT NULL,
   5    school_name    VARCHAR(20) NOT NULL,
-  6    CONSTRAINT non_member_works_for_pk PRIMARY KEY (fname, lname, email),
-  7    CONSTRAINT non_member_works_non_men FOREIGN KEY (school_name) REFERENCES school(school_name),
-  8    CONSTRAINT non_member_works_non_mem FOREIGN KEY (fname, lname, email)
-  9  	 REFERENCES non_member(fname, lname, email)
- 10  );
+  6    teach_sci_or_math VARCHAR(20) NOT NULL CHECK (teach_sci_or_math in ('science', 'math', 'both', 'none')),
+  7    CONSTRAINT non_member_works_for_pk PRIMARY KEY (fname, lname, email),
+  8    CONSTRAINT non_member_works_non_men FOREIGN KEY (school_name) REFERENCES school(school_name),
+  9    CONSTRAINT non_member_works_non_mem FOREIGN KEY (fname, lname, email)
+ 10  	 REFERENCES non_member(fname, lname, email)
+ 11  );
 
 Table created.
 
@@ -200,8 +220,12 @@ SQL> create table non_member_child(
  10    CONSTRAINT non_member_non_member_child_fk FOREIGN KEY (non_mem_fname,
  11  	 non_mem_lname, non_mem_email) REFERENCES non_member(fname, lname, email)
  12  );
+create table non_member_child(
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+Help: https://docs.oracle.com/error-help/db/ora-00955/ 
 
-Table created.
 
 SQL> 
 SQL> create table visitor(
@@ -531,35 +555,317 @@ SQL> INSERT INTO educator
 SQL> 
 SQL> -- FAKE INSERTS: TEST OUT TRIGGER, THESE SHOULD NOT INSERT
 SQL> -- (TESTED ON MARCH 2, 2025 -- PASSED)
-SQL> -- INSERT INTO member
-SQL> -- VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com',
-SQL> --   87801, '5 leroy dr.', 'socorro',
-SQL> --   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
-SQL> --   SYSDATE, 'poor');
-SQL> --
-SQL> -- INSERT INTO board_member
-SQL> -- VALUES(id_seq.CURRVAL, 'secretary');
-SQL> --
-SQL> -- INSERT INTO educator
-SQL> -- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
-SQL> --
-SQL> -- INSERT INTO member
-SQL> -- VALUES(id_seq.NEXTVAL, 'elija', 'holmes', 'eholmes@theranos.com',
-SQL> --   87801, '5 leroy dr.', 'socorro',
-SQL> --   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
-SQL> --   SYSDATE, 'good');
-SQL> --
-SQL> -- INSERT INTO board_member
-SQL> -- VALUES(id_seq.CURRVAL, 'president');
-SQL> --
-SQL> -- INSERT INTO educator
-SQL> -- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+SQL> INSERT INTO member
+  2  VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com',
+  3    87801, '5 leroy dr.', 'socorro',
+  4    TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+  5    SYSDATE, 'poor');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO board_member
+  2  VALUES(id_seq.CURRVAL, 'secretary');
+VALUES(id_seq.CURRVAL, 'secretary')
+       *
+ERROR at line 2:
+ORA-20001: Board member must be in good standing 
+ORA-06512: at "CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUSD", line 11 
+ORA-04088: error during execution of trigger 
+'CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUSD' 
+
+
+SQL> 
+SQL> INSERT INTO educator
+  2  VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO member
+  2  VALUES(id_seq.NEXTVAL, 'elija', 'holmes', 'eholmes@theranos.com',
+  3    87801, '5 leroy dr.', 'socorro',
+  4    TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+  5    SYSDATE, 'good');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO board_member
+  2  VALUES(id_seq.CURRVAL, 'president');
+VALUES(id_seq.CURRVAL, 'president')
+       *
+ERROR at line 2:
+ORA-20002: Can only be one president 
+ORA-06512: at "CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUSD", line 18 
+ORA-04088: error during execution of trigger 
+'CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUSD' 
+
+
+SQL> 
+SQL> INSERT INTO educator
+  2  VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+
+1 row created.
+
+SQL> 
+SQL> /* INSERT 8: non member for is a teacher */
+SQL> INSERT INTO non_member
+  2  VALUES('joe', 'joeson', 'jjoe@gmail.com', 87801, '3 leroy dr.',
+  3    'socorro', SYSDATE);
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO non_member_works_for
+  2  VALUES('joe', 'joeson', 'jjoe@gmail.com', 'abott high', 'math');
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO meeting
+  2  VALUES('que suava cafe', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
+  3    9000006);
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO visitor
+  2  VALUES('joe', 'joeson', 'jjoe@gmail.com','fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
+  3    9000006)
+  4  
+SQL> /* INSERT 9: Non member becomes a member, test out trigger */
+SQL> 
+SQL> INSERT INTO member
+  2  VALUES(id_seq.NEXTVAL, 'joe', 'joeson', 'jjoe@gmail.com', 87801, '3 leroy dr.',
+  3    'socorro', TO_DATE('2026-08-16', 'YYYY-MM-DD'), TO_DATE('2025-08-16', 'YYYY-MM-DD'),
+  4  SYSDATE, 'good');
+
+1 row created.
+
 SQL> 
 SQL> -- FINALLY commit to populate transaction
 SQL> commit;
 
 Commit complete.
 
+SQL> 
+SQL> 
+SQL> -- STEP 4: Display populated tables
+SQL> @display
+SQL> /**
+SQL> * CSE373 - Introduction to Databases - Project
+SQL> * ============================================
+SQL> * Name: Cole Johnson
+SQL> * Due Date: 5/2/2026
+SQL> *
+SQL> * I certify that this assignment has been
+SQL> * completed by myself.
+SQL> **/
+SQL> 
+SQL> SELECT * FROM member;
+
+ MEMBER_ID FNAME                LNAME                                           
+---------- -------------------- --------------------                            
+EMAIL                                 ZIP STREET                                
+------------------------------ ---------- --------------------                  
+CITY                 MEMBER_EX DATE_JOIN DATE_OF_R STAN                         
+-------------------- --------- --------- --------- ----                         
+   9000001 daniel               plainview                                       
+dplain@gmail.com                    87801 1 leroy dr.                           
+socorro              11-MAY-26 11-MAY-23 02-MAY-26 good                         
+                                                                                
+   9000002 royal                tennenbaum                                      
+royalt@gmail.com                    87801 1 leroy dr.                           
+socorro              01-APR-26 01-APR-23 02-MAY-26 good                         
+
+ MEMBER_ID FNAME                LNAME                                           
+---------- -------------------- --------------------                            
+EMAIL                                 ZIP STREET                                
+------------------------------ ---------- --------------------                  
+CITY                 MEMBER_EX DATE_JOIN DATE_OF_R STAN                         
+-------------------- --------- --------- --------- ----                         
+                                                                                
+   9000003 gary                 garyson                                         
+ggary@gary.com                      87801 2 leroy dr.                           
+socorro              26-MAY-26 26-MAY-16 02-MAY-26 good                         
+                                                                                
+   9000004 john                 johnson                                         
+jjohn@john.com                      87801 3 leroy dr.                           
+
+ MEMBER_ID FNAME                LNAME                                           
+---------- -------------------- --------------------                            
+EMAIL                                 ZIP STREET                                
+------------------------------ ---------- --------------------                  
+CITY                 MEMBER_EX DATE_JOIN DATE_OF_R STAN                         
+-------------------- --------- --------- --------- ----                         
+socorro              11-NOV-26 11-NOV-16 02-MAY-26 good                         
+                                                                                
+   9000005 cole                 coleson                                         
+cole@c.com                          87801 4 leroy dr.                           
+socorro              11-MAR-27 11-MAR-16 02-MAY-26 good                         
+                                                                                
+   9000006 elizabeth            holmes                                          
+
+ MEMBER_ID FNAME                LNAME                                           
+---------- -------------------- --------------------                            
+EMAIL                                 ZIP STREET                                
+------------------------------ ---------- --------------------                  
+CITY                 MEMBER_EX DATE_JOIN DATE_OF_R STAN                         
+-------------------- --------- --------- --------- ----                         
+eholmes@theranos.com                87801 5 leroy dr.                           
+socorro              05-MAY-26 05-MAY-22 02-MAY-26 good                         
+                                                                                
+   9000007 cole                 coleson                                         
+cole@c.com                          87801 5 leroy dr.                           
+socorro              11-MAR-27 11-MAR-16 02-MAY-26 good                         
+                                                                                
+
+ MEMBER_ID FNAME                LNAME                                           
+---------- -------------------- --------------------                            
+EMAIL                                 ZIP STREET                                
+------------------------------ ---------- --------------------                  
+CITY                 MEMBER_EX DATE_JOIN DATE_OF_R STAN                         
+-------------------- --------- --------- --------- ----                         
+   9000008 elliot               holmes                                          
+eholmes@theranos.com                87801 5 leroy dr.                           
+socorro              05-MAY-26 05-MAY-22 02-MAY-26 poor                         
+                                                                                
+   9000009 elija                holmes                                          
+eholmes@theranos.com                87801 5 leroy dr.                           
+socorro              05-MAY-26 05-MAY-22 02-MAY-26 good                         
+
+ MEMBER_ID FNAME                LNAME                                           
+---------- -------------------- --------------------                            
+EMAIL                                 ZIP STREET                                
+------------------------------ ---------- --------------------                  
+CITY                 MEMBER_EX DATE_JOIN DATE_OF_R STAN                         
+-------------------- --------- --------- --------- ----                         
+                                                                                
+   9000010 joe                  joeson                                          
+jjoe@gmail.com                      87801 3 leroy dr.                           
+socorro              16-AUG-26 16-AUG-25 02-MAY-26 good                         
+                                                                                
+
+10 rows selected.
+
+SQL> SELECT * FROM parent;
+
+ MEMBER_ID                                                                      
+----------                                                                      
+   9000001                                                                      
+   9000002                                                                      
+   9000004                                                                      
+   9000005                                                                      
+
+SQL> SELECT * FROM educator;
+
+ MEMBER_ID I I SCHOOL_NAME          TEACH_SCI_OR_MATH                           
+---------- - - -------------------- --------------------                        
+   9000003 n y abott high           none                                        
+   9000004 y n abott high           science                                     
+   9000005 y n abott high           science                                     
+   9000006 y n abott high           math                                        
+   9000007 n y abott high           none                                        
+   9000008 y n abott high           math                                        
+   9000009 y n abott high           math                                        
+
+7 rows selected.
+
+SQL> SELECT * FROM board_member;
+
+ MEMBER_ID ROLE                                                                 
+---------- -------------                                                        
+   9000006 president                                                            
+
+SQL> SELECT * FROM member_child;
+
+ MEMBER_ID CHILD_FNAME          CHILD_LNAME          SCHOOL_NAME                
+---------- -------------------- -------------------- --------------------       
+DATE_OF_R                                                                       
+---------                                                                       
+   9000001 h.w.                 plainview            abott middle               
+17-AUG-22                                                                       
+                                                                                
+   9000002 richie               tennenbaum           abott middle               
+02-MAY-26                                                                       
+                                                                                
+   9000004 john jr.             johnson              abott middle               
+02-MAY-26                                                                       
+                                                                                
+
+ MEMBER_ID CHILD_FNAME          CHILD_LNAME          SCHOOL_NAME                
+---------- -------------------- -------------------- --------------------       
+DATE_OF_R                                                                       
+---------                                                                       
+   9000005 cole jr.             coleson              abott high                 
+02-MAY-26                                                                       
+                                                                                
+   9000005 cole jr. II          coleson              abott high                 
+02-MAY-26                                                                       
+                                                                                
+
+SQL> SELECT * FROM school;
+
+SCHOOL_NAME          PRINCIPLE_LNAME      PRINCIPLE_FNAME      I I              
+-------------------- -------------------- -------------------- - -              
+abott middle         george               foreman              n y              
+abott high           joerge               beforeman            y n              
+
+SQL> 
+SQL> SELECT * FROM non_member;
+
+FNAME                LNAME                EMAIL                       ZIP       
+-------------------- -------------------- -------------------- ----------       
+STREET               CITY                 DATE_OF_R                             
+-------------------- -------------------- ---------                             
+elizabeth            holmes               eholmes@theranos.com      87801       
+5 leroy dr.          socorro              02-MAY-26                             
+                                                                                
+joe                  joeson               jjoe@gmail.com            87801       
+3 leroy dr.          socorro              02-MAY-26                             
+                                                                                
+
+SQL> SELECT * FROM non_member_child;
+
+no rows selected
+
+SQL> SELECT * FROM volunteer_liason;
+
+no rows selected
+
+SQL> SELECT * FROM liason;
+
+no rows selected
+
+SQL> SELECT * FROM visitor;
+
+FNAME                LNAME                EMAIL                                 
+-------------------- -------------------- --------------------                  
+MEET_LOCATION        MEET_DATE             MEMBER_ID                            
+-------------------- -------------------- ----------                            
+elizabeth            holmes               eholmes@theranos.com                  
+fire and ice coffee  03-MAY-26               9000006                            
+                                                                                
+
+SQL> SELECT * FROM meeting;
+
+MEET_LOCATION        MEET_DATE             MEMBER_ID                            
+-------------------- -------------------- ----------                            
+fire and ice coffee  03-MAY-26               9000006                            
+que suava cafe       03-MAY-26               9000006                            
+
+SQL> SELECT * FROM non_member_works_for;
+
+FNAME                LNAME                EMAIL                                 
+-------------------- -------------------- --------------------                  
+SCHOOL_NAME          TEACH_SCI_OR_MATH                                          
+-------------------- --------------------                                       
+joe                  joeson               jjoe@gmail.com                        
+abott high           math                                                       
+                                                                                
+
+SQL> 
 SQL> 
 SQL> 
 SQL> -- STEP 4: Execute queries
@@ -599,7 +905,7 @@ SQL> SELECT COUNT(*) AS "Educator But Not Parent Count" from (
 
 Educator But Not Parent Count                                                   
 -----------------------------                                                   
-                            3                                                   
+                            5                                                   
 
 SQL> 
 SQL> SELECT COUNT(*) AS "Both Parent and Eduator Count" from (
@@ -633,6 +939,8 @@ SQL> SELECT * FROM (
    9000001 daniel               plainview                     9 MONTH TO EXPIRY 
    9000003 gary                 garyson                      24 MONTH TO EXPIRY 
    9000006 elizabeth            holmes                        3 MONTH TO EXPIRY 
+   9000008 elliot               holmes                        3 MONTH TO EXPIRY 
+   9000009 elija                holmes                        3 MONTH TO EXPIRY 
 
 SQL> 
 SQL> SELECT * FROM (
@@ -669,6 +977,8 @@ SQL> SELECT m.member_id, fname, lname, e.teach_sci_or_math
 ---------- -------------------- -------------------- --------------------       
    9000005 cole                 coleson              science                    
    9000006 elizabeth            holmes               math                       
+   9000008 elliot               holmes               math                       
+   9000009 elija                holmes               math                       
 
 SQL> 
 SQL> /**
@@ -708,13 +1018,254 @@ FNAME                LNAME                EMAIL
 elizabeth            holmes               eholmes@theranos.com                  
 ONE MEMBER                                                                      
                                                                                 
-cole                 coleson              cole@c.com                            
-BOTH MEMBER                                                                     
+joe                  joeson               jjoe@gmail.com                        
+ONE MEMBER                                                                      
                                                                                 
 cole                 coleson              cole@c.com                            
 BOTH MEMBER                                                                     
                                                                                 
 
+FNAME                LNAME                EMAIL                                 
+-------------------- -------------------- ------------------------------        
+'ONEMEMBER'                                                                     
+-----------                                                                     
+cole                 coleson              cole@c.com                            
+BOTH MEMBER                                                                     
+                                                                                
+
+SQL> 
+SQL> -- STEP 5: Load in procedures
+SQL> @procedures
+SQL> -- NOTE: This is so I can so dbms output commands
+SQL> -- that can be displayed in the interactive session
+SQL> SET SERVEROUTPUT ON;
+SQL> 
+SQL> /**
+SQL> * PROCEDURE 1: find_id_name(last): display the ID, first and last name of all members
+SQL> * (regardless of their membership standing) whose last name contains
+SQL> * last (the parameter!) as a substring. Print a message if there is
+SQL> * no such member.
+SQL> **/
+SQL> -- Help function
+SQL> CREATE OR REPLACE PROCEDURE get_lname
+  2    (last IN member.lname%type,
+  3  	mem_id OUT member.member_id%type,
+  4  	first_name OUT member.fname %type,
+  5  	last_name OUT member.lname%type,
+  6  	status OUT boolean)
+  7  IS
+  8  BEGIN
+  9    SELECT member_id, fname, lname INTO mem_id, first_name, last_name
+ 10    FROM member WHERE lname = last;
+ 11    status := true;
+ 12  EXCEPTION
+ 13    WHEN no_data_found THEN
+ 14  	 status := false;
+ 15  END;
+ 16  /
+
+Procedure created.
+
+SQL> show errors
+No errors.
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE find_id_name
+  2    (last IN member.lname%type)
+  3  IS
+  4    first_name VARCHAR(20);
+  5    last_name VARCHAR(20);
+  6    mem_id number;
+  7    status boolean;
+  8  BEGIN
+  9    get_lname(last, mem_id, first_name, last_name, status);
+ 10    IF status THEN
+ 11  	 dbms_output.put_line('Member found: ' || mem_id || ',' || last_name || ',' || first_name);
+ 12    ELSE
+ 13  	 dbms_output.put_line('Member not found ');
+ 14    END IF;
+ 15  END;
+ 16  /
+
+Procedure created.
+
+SQL> show errors
+No errors.
+SQL> execute find_id_name('holmes');
+BEGIN find_id_name('holmes'); END;
+
+*
+ERROR at line 1:
+ORA-01422: exact fetch returned more than the requested number of rows (1) 
+Help: https://docs.oracle.com/error-help/db/ora-01422/ 
+
+
+SQL> 
+SQL> /**
+SQL> * PROCEDURE 2: enroll_or_renew(first, last, email): if a person with the
+SQL> * given first name, last name, and email address is a member in good
+SQL> * standing, then extend the membership by one year; if the membership
+SQL> * has expired, then set the expiration date to one year from today.
+SQL> * If no such person is found among the past or present members, then
+SQL> * enroll this person as a new member.
+SQL> **/
+SQL> 
+SQL> -- Helper function
+SQL> CREATE OR REPLACE PROCEDURE get_standing_and_expiry
+  2    (first IN member.fname%type,
+  3  	last IN member.lname%type,
+  4  	mem_email IN member.email%type,
+  5  	mem_standing OUT member.standing%type,
+  6  	status OUT boolean, -- NOTE: Check if record exists
+  7  	is_expired OUT boolean)
+  8  IS
+  9    mem_expr member.member_expr%type;
+ 10  BEGIN
+ 11    SELECT member_expr, standing INTO mem_expr, mem_standing
+ 12    FROM member m
+ 13    WHERE first = fname
+ 14    AND last = lname
+ 15    AND mem_email = email;
+ 16    status := true;
+ 17    IF TRUNC(mem_expr) - TRUNC(SYSDATE) < 0 THEN
+ 18  	 is_expired := true;
+ 19    ELSE
+ 20  	 is_expired := false;
+ 21    END IF;
+ 22  EXCEPTION
+ 23    WHEN no_data_found THEN
+ 24  	 status := false;
+ 25  END;
+ 26  /
+
+Procedure created.
+
+SQL> show errors
+No errors.
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE enroll_or_renew
+  2    (first IN member.fname%type,
+  3  	last IN member.lname%type,
+  4  	mem_email IN member.email%type)
+  5  IS
+  6    status boolean;
+  7    is_expired boolean;
+  8    mem_standing member.standing%type;
+  9  BEGIN
+ 10    get_standing_and_expiry(first, last, mem_email, mem_standing, status, is_expired);
+ 11    IF status THEN
+ 12  	 IF is_expired AND mem_standing = 'good' THEN
+ 13  	   UPDATE member m
+ 14  	   -- Extend membership one year from today
+ 15  	   SET member_expr = ADD_MONTHS(SYSDATE, 12)
+ 16  	   WHERE first = fname
+ 17  	   AND last = lname
+ 18  	   AND mem_email = email;
+ 19  	 END IF;
+ 20  	 IF NOT is_expired AND mem_standing = 'good' THEN
+ 21  	   UPDATE member m
+ 22  	   SET member_expr = ADD_MONTHS(member_expr, 12)
+ 23  	   WHERE first = fname
+ 24  	   AND last = lname
+ 25  	   AND mem_email = email;
+ 26  	 END IF;
+ 27    ELSE
+ 28  	 -- If entry doesn't already exists, add it
+ 29  	 IF NOT status THEN
+ 30  	   INSERT INTO member (member_id, fname, lname,
+ 31  	     email, member_expr,
+ 32  	     date_joined, date_of_record, standing)
+ 33  	   VALUES(id_seq.NEXTVAL, first, last, mem_email,
+ 34  	     ADD_MONTHS(SYSDATE, 12),
+ 35  	     SYSDATE, SYSDATE, 'good');
+ 36  	 END IF;
+ 37    END IF;
+ 38  END;
+ 39  /
+
+Procedure created.
+
+SQL> show errors
+No errors.
+SQL> execute enroll_or_renew('royal', 'tennenbaum', 'royalt@gmail.com');
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> /*
+SQL> * PROCEDURE 3: flag_graduated_children( ): find members all of whose children
+SQL> * should have graduated by now; list their ID, first and last name.
+SQL> **/
+SQL> 
+SQL> -- Helper function
+SQL> CREATE OR REPLACE PROCEDURE get_child_dor
+  2    (mem_id IN member.member_id%type,
+  3  	status OUT boolean,
+  4  	is_graduated OUT boolean)
+  5  IS
+  6    CURSOR child_cursor IS SELECT member_id, date_of_record FROM member_child;
+  7    dor member_child.date_of_record%type;
+  8    child_mem_id member_child.member_id%type;
+  9  BEGIN
+ 10    is_graduated := false;
+ 11    status := false;
+ 12    OPEN child_cursor;
+ 13    LOOP
+ 14  	 FETCH child_cursor into child_mem_id, dor;
+ 15  	 IF TRUNC(MONTHS_BETWEEN(SYSDATE, dor)/12) >= 4
+ 16  	   AND child_mem_id = mem_id THEN
+ 17  	   is_graduated := true;
+ 18  	   status := true;
+ 19  	   EXIT;
+ 20  	 END IF;
+ 21  	 EXIT WHEN child_cursor%NOTFOUND;
+ 22    END LOOP;
+ 23    CLOSE child_cursor;
+ 24  END;
+ 25  /
+
+Procedure created.
+
+SQL> show errors
+No errors.
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE flag_graduated_children
+  2  IS
+  3    is_graduated BOOLEAN;
+  4    status BOOLEAN;
+  5    first_name member.fname%type;
+  6    last_name member.lname%type;
+  7    mem_id member.member_id%type;
+  8  BEGIN
+  9    is_graduated := false;
+ 10    status := false;
+ 11    SELECT member_id, fname, lname INTO mem_id, first_name, last_name
+ 12    FROM member;
+ 13    get_child_dor(mem_id, status, is_graduated);
+ 14    IF status AND is_graduated THEN
+ 15  	 dbms_output.put_line('Flaged member for child grad: ' || mem_id || ', ' || first_name|| ', ' || last_name);
+ 16    END IF;
+ 17  EXCEPTION
+ 18    -- NOTE: Hacky way to ingore duplicates
+ 19    WHEN too_many_rows THEN
+ 20  	 dbms_output.put_line('Flag member for child grad: ' || mem_id || ', ' || first_name|| ', ' || last_name);
+ 21  END;
+ 22  
+ 23  /
+
+Procedure created.
+
+SQL> show errors
+No errors.
+SQL> execute flag_graduated_children
+Flag member for child grad: 9000001, daniel, plainview                          
+
+PL/SQL procedure successfully completed.
+
+SQL> SET SERVEROUTPUT OFF;
 SQL> 
 SQL> -- END: Cleanup by dropping all tables
 SQL> @cleanup

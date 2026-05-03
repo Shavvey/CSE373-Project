@@ -138,11 +138,28 @@ create table non_member(
   CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
 );
 
+create table non_member_child(
+  nm_fname          VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
+  nm_lname          VARCHAR(20) NOT NULL,
+  nm_email          VARCHAR(20) NOT NULL,
+  child_fname    VARCHAR(20) NOT NULL,
+  child_lname    VARCHAR(20) NOT NULL,
+  school_name    VARCHAR(20) NOT NULL,
+  date_of_record DATE NOT NULL, -- NOTE: When this info was learned and put inside database
+  CONSTRAINT non_member_child_pk PRIMARY KEY(child_fname, child_lname, nm_fname, nm_lname, nm_email),
+  CONSTRAINT non_member_child_member_fk FOREIGN KEY (nm_fname, nm_lname, nm_email) 
+  REFERENCES non_member(fname, lname, email)
+    INITIALLY DEFERRED DEFERRABLE,
+  CONSTRAINT non_member_child_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name)
+    INITIALLY DEFERRED DEFERRABLE
+);
+
 create table non_member_works_for(
   fname          VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
   lname          VARCHAR(20) NOT NULL,
   email          VARCHAR(20) NOT NULL,
   school_name    VARCHAR(20) NOT NULL,
+  teach_sci_or_math VARCHAR(20) NOT NULL CHECK (teach_sci_or_math in ('science', 'math', 'both', 'none')),
   CONSTRAINT non_member_works_for_pk PRIMARY KEY (fname, lname, email),
   CONSTRAINT non_member_works_non_men FOREIGN KEY (school_name) REFERENCES school(school_name),
   CONSTRAINT non_member_works_non_mem FOREIGN KEY (fname, lname, email)
