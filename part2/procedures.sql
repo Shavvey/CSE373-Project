@@ -19,6 +19,7 @@ IS
 BEGIN
   SELECT member_id, fname, lname INTO mem_id, first_name, last_name
   FROM member WHERE lname = last;
+  -- If we can find a member with given last name, set boolean flag
   status := true;
 EXCEPTION
   WHEN no_data_found THEN
@@ -72,6 +73,7 @@ BEGIN
   AND last = lname
   AND mem_email = email;
   status := true;
+  -- CHECK to see the membership is expired (should be non zero val)
   IF TRUNC(mem_expr) - TRUNC(SYSDATE) < 0 THEN
     is_expired := true;
   ELSE
@@ -93,6 +95,7 @@ IS
   is_expired boolean;
   mem_standing member.standing%type;
 BEGIN
+  -- Use expiry and status flag to check expiry and existence of entry
   get_standing_and_expiry(first, last, mem_email, mem_standing, status, is_expired);
   IF status THEN
     IF is_expired AND mem_standing = 'good' THEN
@@ -146,9 +149,11 @@ BEGIN
   status := false;
   OPEN child_cursor;
   LOOP
+    -- use cursor to fetch entries
     FETCH child_cursor into child_mem_id, dor;
     IF TRUNC(MONTHS_BETWEEN(SYSDATE, dor)/12) >= 4 
       AND child_mem_id = mem_id THEN
+      -- If child should have graduated, trip boolean flags
       is_graduated := true;
       status := true;
       EXIT;
@@ -177,7 +182,7 @@ BEGIN
     dbms_output.put_line('Flaged member for child grad: ' || mem_id || ', ' || first_name|| ', ' || last_name);
   END IF;
 EXCEPTION
-  -- NOTE: Hacky way to ingore duplicates
+  -- NOTE: Hacky way to ignore duplicates
   WHEN too_many_rows THEN
     dbms_output.put_line('Flag member for child grad: ' || mem_id || ', ' || first_name|| ', ' || last_name);
 END;

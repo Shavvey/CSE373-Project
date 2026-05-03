@@ -19,6 +19,12 @@
 * - TRIGGER 2: I'm not sure why it's not working.
 * I think dbms_output.put_line doesn't work in
 * interactive sessions or can't be used in triggers.
+*
+* - PROCEDURE 1: This procedure works, but only if
+* the past last name has no duplicate last names.
+* The INTO statement will raise an error if not.
+* I should have used a cursor here. 
+* I just ran out of time to fix this.
 **/
 
 -- set up spooling, if not already enabled
