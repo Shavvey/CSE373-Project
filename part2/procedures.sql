@@ -12,7 +12,7 @@ SET SERVEROUTPUT ON;
 CREATE OR REPLACE PROCEDURE find_id_name
   (last IN member.lname%type)
 IS
-  CURSOR mem_cursor IS_SELECT member_id, fname, lname FROM member;
+  CURSOR mem_cursor IS SELECT member_id, fname, lname FROM member;
   mem_id member.member_id%type;
   mem_fname member.fname%type;
   mem_lname member.lname%type;
@@ -22,7 +22,7 @@ BEGIN
     FETCH mem_cursor into mem_id, mem_fname, mem_lname;
       -- INSTR returns position of substring using 1-indexing, so any match is > 0
       IF INSTR(mem_lname, last) > 0 THEN
-  dbms_output.put_line('Member found: ' || mem_id || ',' || last_name || ',' || mem_lname);
+  dbms_output.put_line('Member found: ' || mem_id || ',' || mem_fname || ',' || mem_lname);
     END IF;
     EXIT WHEN mem_cursor%NOTFOUND;
   END LOOP;
