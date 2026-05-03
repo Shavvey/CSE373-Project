@@ -34,6 +34,9 @@ drop table visitor -- drop VISITOR
 drop table non_member cascade constraints -- drop NON MEMBER
 ;
 
+drop table non_member_works_for cascade constraints -- drop NON MEMBER WORKS FOR
+;
+
 drop table non_member_child cascade constraints -- drop NON MEMBER CHILD
 ;
 

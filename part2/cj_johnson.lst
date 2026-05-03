@@ -174,6 +174,20 @@ SQL> create table non_member(
 Table created.
 
 SQL> 
+SQL> create table non_member_works_for(
+  2    fname	      VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
+  3    lname	      VARCHAR(20) NOT NULL,
+  4    email	      VARCHAR(20) NOT NULL,
+  5    school_name    VARCHAR(20) NOT NULL,
+  6    CONSTRAINT non_member_works_for_pk PRIMARY KEY (fname, lname, email),
+  7    CONSTRAINT non_member_works_non_men FOREIGN KEY (school_name) REFERENCES school(school_name),
+  8    CONSTRAINT non_member_works_non_mem FOREIGN KEY (fname, lname, email)
+  9  	 REFERENCES non_member(fname, lname, email)
+ 10  );
+
+Table created.
+
+SQL> 
 SQL> create table non_member_child(
   2    non_mem_fname VARCHAR(20) NOT NULL,
   3    non_mem_lname VARCHAR(20) NOT NULL,
@@ -211,38 +225,80 @@ Table created.
 SQL> 
 SQL> -- STEP 2: Hoist triggers
 SQL> @triggers
+SQL> /**
+SQL> * TRIGGER 1: Ensure that only a member in
+SQL> * good standing can join the Board and also
+SQL> * that there is never more than one president.
+SQL> **/
 SQL> CREATE OR REPLACE TRIGGER
-  2    board_member_president_aiur -- after insert or update, but before commit
+  2    board_member_president_aiusd -- after insert or update, but before commit
   3  BEFORE INSERT OR UPDATE
   4  ON board_member
   5  REFERENCING NEW AS n
   6  for each row
   7  DECLARE
   8    mem_standing member.standing%type;
-  9    board_role board_member.role%type;
+  9    r_count number;
  10  BEGIN
- 11   president_exists := false;
- 12  -- Get standing
- 13   SELECT standing INTO mem_standing
- 14   FROM member
- 15   WHERE :n.member_id = member.member_id;
- 16    -- Trigger exception if president candidate is in poor standing
- 17    IF (mem_standing = 'poor') THEN
- 18  	 raise_application_error(-20001, 'Board member must be in good standing');
- 19    END IF;
- 20  END;
- 21  /
+ 11  -- Get standing
+ 12   SELECT standing INTO mem_standing
+ 13   FROM member
+ 14   WHERE :n.member_id = member.member_id;
+ 15    -- Trigger exception if president candidate is in poor standing
+ 16    IF (mem_standing = 'poor') THEN
+ 17  	 raise_application_error(-20001, 'Board member must be in good standing');
+ 18    END IF;
+ 19    IF (:n.role = 'president') THEN
+ 20  	 SELECT COUNT(*) INTO r_count
+ 21  	 FROM board_member
+ 22  	 WHERE role = :n.role;
+ 23  	 IF r_count > 0 THEN
+ 24  	   raise_application_error(-20002, 'Can only be one president');
+ 25  	 END IF;
+ 26    END IF;
+ 27  END;
+ 28  /
 
-Warning: Trigger created with compilation errors.
+Trigger created.
 
 SQL> show errors
-Errors for TRIGGER BOARD_MEMBER_PRESIDENT_AIUR:
-
-LINE/COL ERROR                                                                  
--------- -----------------------------------------------------------------      
-5/2      PL/SQL: Statement ignored                                              
-5/2      PLS-00201: identifier 'PRESIDENT_EXISTS' must be declared              
+No errors.
 SQL> 
+SQL> /**
+SQL> * TRIGGER 2: If a person becoming a member for the first time had attended a public
+SQL> * meeting in the past, then print a thank-you message for attendance on
+SQL> * that date.
+SQL> **/
+SQL> CREATE OR REPLACE TRIGGER
+  2    member_thank_you_aird
+  3  AFTER INSERT
+  4  ON member
+  5  REFERENCING NEW as n
+  6  for each row
+  7  DECLARE
+  8    CURSOR visitor_cursor IS SELECT fname, lname, email, meet_date FROM visitor;
+  9    vis_fname visitor.fname%type;
+ 10    vis_lname visitor.lname%type;
+ 11    vis_email visitor.email%type;
+ 12    vis_meet_date visitor.meet_date%type;
+ 13  BEGIN
+ 14    OPEN visitor_cursor;
+ 15    LOOP
+ 16  	 FETCH visitor_cursor INTO vis_fname, vis_lname, vis_email, vis_meet_date;
+ 17  	 IF (:n.fname = vis_fname) AND (:n.lname = vis_lname)
+ 18  	   AND (:n.email = vis_email) THEN
+ 19  	   dbms_output.put_line('Thank you for attending meet on: ' || vis_meet_date);
+ 20  	 END IF;
+ 21  	 EXIT WHEN visitor_cursor%NOTFOUND;
+ 22    END LOOP;
+ 23    CLOSE visitor_cursor;
+ 24  END;
+ 25  /
+
+Trigger created.
+
+SQL> show errors
+No errors.
 SQL> 
 SQL> -- STEP 3: Populate database
 SQL> @populate
@@ -421,13 +477,8 @@ SQL> INSERT INTO member
 SQL> 
 SQL> INSERT INTO board_member
   2  VALUES(id_seq.CURRVAL, 'president');
-VALUES(id_seq.CURRVAL, 'president')
-       *
-ERROR at line 2:
-ORA-04098: trigger 'CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUR' is invalid and failed 
-re-validation 
-Help: https://docs.oracle.com/error-help/db/ora-04098/ 
 
+1 row created.
 
 SQL> 
 SQL> INSERT INTO educator
@@ -436,44 +487,13 @@ SQL> INSERT INTO educator
 1 row created.
 
 SQL> 
-SQL> -- TEST OUT TRIGGER, THESE SHOULD NOT INSERT
-SQL> INSERT INTO member
-  2  VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com',
-  3    87801, '5 leroy dr.', 'socorro',
-  4    TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
-  5    SYSDATE, 'good');
-
-1 row created.
-
-SQL> 
-SQL> INSERT INTO board_member
-  2  VALUES(id_seq.CURRVAL, 'president');
-VALUES(id_seq.CURRVAL, 'president')
-       *
-ERROR at line 2:
-ORA-04098: trigger 'CJOHNSO.BOARD_MEMBER_PRESIDENT_AIUR' is invalid and failed 
-re-validation 
-Help: https://docs.oracle.com/error-help/db/ora-04098/ 
-
-
-SQL> 
-SQL> INSERT INTO educator
-  2  VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
-
-1 row created.
-
 SQL> 
 SQL> /* INSERT 8: Create meeting organized by president holmes */
 SQL> INSERT INTO meeting
   2  VALUES('fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
   3    id_seq.CURRVAL);
-INSERT INTO meeting
-*
-ERROR at line 1:
-ORA-02291: integrity constraint (CJOHNSO.MEETING_BOARD_MEM_FK) violated - 
-parent key not found 
-Help: https://docs.oracle.com/error-help/db/ora-02291/ 
 
+1 row created.
 
 SQL> 
 SQL> /* INSERT 9: Create non-member with the same name and email addr as member */
@@ -489,13 +509,8 @@ SQL> INSERT INTO visitor
   2  VALUES('elizabeth', 'holmes', 'eholmes@theranos.com',
   3    'fire and ice coffee', TO_DATE('2026-05-03', 'YYYY-MM-DD'),
   4    id_seq.CURRVAL);
-INSERT INTO visitor
-*
-ERROR at line 1:
-ORA-02291: integrity constraint (CJOHNSO.VISITOR_MEETING_FK) violated - parent 
-key not found 
-Help: https://docs.oracle.com/error-help/db/ora-02291/ 
 
+1 row created.
 
 SQL> 
 SQL> /* INSERT 9: Create a member with the same name and addr as another */
@@ -513,6 +528,32 @@ SQL> INSERT INTO educator
 
 1 row created.
 
+SQL> 
+SQL> -- FAKE INSERTS: TEST OUT TRIGGER, THESE SHOULD NOT INSERT
+SQL> -- (TESTED ON MARCH 2, 2025 -- PASSED)
+SQL> -- INSERT INTO member
+SQL> -- VALUES(id_seq.NEXTVAL, 'elliot', 'holmes', 'eholmes@theranos.com',
+SQL> --   87801, '5 leroy dr.', 'socorro',
+SQL> --   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+SQL> --   SYSDATE, 'poor');
+SQL> --
+SQL> -- INSERT INTO board_member
+SQL> -- VALUES(id_seq.CURRVAL, 'secretary');
+SQL> --
+SQL> -- INSERT INTO educator
+SQL> -- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
+SQL> --
+SQL> -- INSERT INTO member
+SQL> -- VALUES(id_seq.NEXTVAL, 'elija', 'holmes', 'eholmes@theranos.com',
+SQL> --   87801, '5 leroy dr.', 'socorro',
+SQL> --   TO_DATE('2026-05-05', 'YYYY-MM-DD'), TO_DATE('2022-05-05', 'YYYY-MM-DD'),
+SQL> --   SYSDATE, 'good');
+SQL> --
+SQL> -- INSERT INTO board_member
+SQL> -- VALUES(id_seq.CURRVAL, 'president');
+SQL> --
+SQL> -- INSERT INTO educator
+SQL> -- VALUES(id_seq.CURRVAL,'y', 'n', 'abott high', 'math');
 SQL> 
 SQL> -- FINALLY commit to populate transaction
 SQL> commit;
@@ -558,7 +599,7 @@ SQL> SELECT COUNT(*) AS "Educator But Not Parent Count" from (
 
 Educator But Not Parent Count                                                   
 -----------------------------                                                   
-                            4                                                   
+                            3                                                   
 
 SQL> 
 SQL> SELECT COUNT(*) AS "Both Parent and Eduator Count" from (
@@ -592,7 +633,6 @@ SQL> SELECT * FROM (
    9000001 daniel               plainview                     9 MONTH TO EXPIRY 
    9000003 gary                 garyson                      24 MONTH TO EXPIRY 
    9000006 elizabeth            holmes                        3 MONTH TO EXPIRY 
-   9000007 elliot               holmes                        3 MONTH TO EXPIRY 
 
 SQL> 
 SQL> SELECT * FROM (
@@ -629,7 +669,6 @@ SQL> SELECT m.member_id, fname, lname, e.teach_sci_or_math
 ---------- -------------------- -------------------- --------------------       
    9000005 cole                 coleson              science                    
    9000006 elizabeth            holmes               math                       
-   9000007 elliot               holmes               math                       
 
 SQL> 
 SQL> /**
@@ -743,6 +782,12 @@ Table dropped.
 
 SQL> 
 SQL> drop table non_member cascade constraints -- drop NON MEMBER
+  2  ;
+
+Table dropped.
+
+SQL> 
+SQL> drop table non_member_works_for cascade constraints -- drop NON MEMBER WORKS FOR
   2  ;
 
 Table dropped.
