@@ -174,24 +174,6 @@ SQL> create table non_member(
 Table created.
 
 SQL> 
-SQL> create table non_member_child(
-  2    nm_fname 	 VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
-  3    nm_lname 	 VARCHAR(20) NOT NULL,
-  4    nm_email 	 VARCHAR(20) NOT NULL,
-  5    child_fname    VARCHAR(20) NOT NULL,
-  6    child_lname    VARCHAR(20) NOT NULL,
-  7    school_name    VARCHAR(20) NOT NULL,
-  8    date_of_record DATE NOT NULL, -- NOTE: When this info was learned and put inside database
-  9    CONSTRAINT non_member_child_pk PRIMARY KEY(child_fname, child_lname, nm_fname, nm_lname, nm_email),
- 10    CONSTRAINT non_member_child_member_fk FOREIGN KEY (nm_fname, nm_lname, nm_email)
- 11    REFERENCES non_member(fname, lname, email)
- 12  	 INITIALLY DEFERRED DEFERRABLE,
- 13    CONSTRAINT non_member_child_school_fk FOREIGN KEY (school_name) REFERENCES school(school_name)
- 14  	 INITIALLY DEFERRED DEFERRABLE
- 15  );
-
-Table created.
-
 SQL> 
 SQL> create table non_member_works_for(
   2    fname	      VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
@@ -220,12 +202,8 @@ SQL> create table non_member_child(
  10    CONSTRAINT non_member_non_member_child_fk FOREIGN KEY (non_mem_fname,
  11  	 non_mem_lname, non_mem_email) REFERENCES non_member(fname, lname, email)
  12  );
-create table non_member_child(
-             *
-ERROR at line 1:
-ORA-00955: name is already used by an existing object 
-Help: https://docs.oracle.com/error-help/db/ora-00955/ 
 
+Table created.
 
 SQL> 
 SQL> create table visitor(
