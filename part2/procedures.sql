@@ -8,40 +8,25 @@ SET SERVEROUTPUT ON;
 * last (the parameter!) as a substring. Print a message if there is
 * no such member.
 **/
--- Help function
-CREATE OR REPLACE PROCEDURE get_lname
-  (last IN member.lname%type,
-   mem_id OUT member.member_id%type,
-   first_name OUT member.fname %type,
-   last_name OUT member.lname%type,
-   status OUT boolean)
-IS
-BEGIN
-  SELECT member_id, fname, lname INTO mem_id, first_name, last_name
-  FROM member WHERE lname = last;
-  -- If we can find a member with given last name, set boolean flag
-  status := true;
-EXCEPTION
-  WHEN no_data_found THEN
-    status := false;
-END;
-/
-show errors
 
 CREATE OR REPLACE PROCEDURE find_id_name
   (last IN member.lname%type)
 IS
-  first_name VARCHAR(20);
-  last_name VARCHAR(20);
-  mem_id number;
-  status boolean;
+  CURSOR mem_cursor IS_SELECT member_id, fname, lname FROM member;
+  mem_id member.member_id%type;
+  mem_fname member.fname%type;
+  mem_lname member.lname%type;
 BEGIN
-  get_lname(last, mem_id, first_name, last_name, status);
-  IF status THEN
-    dbms_output.put_line('Member found: ' || mem_id || ',' || last_name || ',' || first_name);
-  ELSE
-    dbms_output.put_line('Member not found ');
-  END IF;
+  OPEN mem_cursor;
+  LOOP
+    FETCH mem_cursor into mem_id, mem_fname, mem_lname;
+      -- INSTR returns position of substring using 1-indexing, so any match is > 0
+      IF INSTR(mem_lname, last) > 0 THEN
+  dbms_output.put_line('Member found: ' || mem_id || ',' || last_name || ',' || mem_lname);
+    END IF;
+    EXIT WHEN mem_cursor%NOTFOUND;
+  END LOOP;
+  CLOSE mem_cursor;
 END;
 /
 show errors
