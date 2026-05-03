@@ -138,6 +138,17 @@ create table non_member(
   CONSTRAINT non_member_pk PRIMARY KEY (fname, lname, email)
 );
 
+create table non_member_works_for(
+  fname          VARCHAR(20) NOT NULL, -- NOTE: Maybe I should prefix this to avoid unwanted natural joins
+  lname          VARCHAR(20) NOT NULL,
+  email          VARCHAR(20) NOT NULL,
+  school_name    VARCHAR(20) NOT NULL,
+  CONSTRAINT non_member_works_for_pk PRIMARY KEY (fname, lname, email),
+  CONSTRAINT non_member_works_non_men FOREIGN KEY (school_name) REFERENCES school(school_name),
+  CONSTRAINT non_member_works_non_mem FOREIGN KEY (fname, lname, email)
+    REFERENCES non_member(fname, lname, email)
+);
+
 create table non_member_child(
   non_mem_fname VARCHAR(20) NOT NULL,
   non_mem_lname VARCHAR(20) NOT NULL,
